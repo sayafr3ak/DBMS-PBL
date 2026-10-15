@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ p.full_name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('persons.index') }}">Persons</a>{{ m.icon('chevron-right', 'icon-sm') }}{{ p.full_name }}</div>
+<div class="page-head">
+  <div class="row">{{ m.avatar(p.full_name, p.person_id, 'lg') }}
+    <div><h1>{{ p.full_name }}</h1><p>Person #{{ p.person_id }} · added {{ p.created_at|d }}</p></div></div>
+  <div class="page-actions">
+    {% if can('person.manage') %}<a class="btn" href="{{ url_for('persons.edit', person_id=p.person_id) }}">{{ m.icon('edit') }} Edit</a>{% endif %}
+    {% if can('person.delete') %}
+    <form method="post" action="{{ url_for('persons.delete', person_id=p.person_id) }}" data-confirm="Delete {{ p.full_name }}? This only works if the person is not linked to any case.">
+      {{ m.csrf() }}<button class="btn btn-danger" type="submit">{{ m.icon('trash') }} Delete</button></form>{% endif %}
+  </div>
+</div>
+<div class="grid g-main">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('folder') }} Case involvement <span class="sub">{{ involvement|length }} link{{ 's' if involvement|length != 1 }}</span></h2></div>
+    {% if involvement %}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Role</th><th>Complaint</th><th>Title</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>{% for i in involvement %}
+        <tr class="clickable" data-href="{{ url_for('complaints.detail', complaint_id=i.complaint_id) }}">
+          <td><span class="badge {{ {'Complainant':'blue','Accused':'red','Witness':'green'}[i.role] }}">{{ i.role }}</span></td>
+          <td><a class="idtag" href="{{ url_for('complaints.detail', complaint_id=i.complaint_id) }}">{{ i.complaint_no }}</a></td>
+          <td class="title-cell">{{ i.title }}</td><td>{{ m.status_badge(i.status) }}</td>
+          <td class="small">{{ i.detail|label if i.detail else '' }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}{{ m.empty('Not linked to any case', 'This person can be safely deleted.', 'folder') }}{% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>{{ m.icon('user') }} Details</h3></div>
+    <div class="card-body">
+      <dl class="dl">
+        <dt>Gender</dt><dd>{{ C.GENDERS.get(p.gender) }}</dd>
+        <dt>Date of birth</dt><dd>{{ p.date_of_birth|d }}{% if p.date_of_birth %} <span class="muted">({{ (today - p.date_of_birth).days // 365 }} yrs)</span>{% endif %}</dd>
+        <dt>Mobile</dt><dd class="mono">{{ p.phone or '—' }}</dd>
+        <dt>Email</dt><dd>{{ p.email or '—' }}</dd>
+        <dt>Address</dt><dd>{{ p.address }}</dd>
+        <dt>ID proof</dt><dd>{% if p.id_proof_type %}{{ p.id_proof_type|label }} · <span class="mono">{{ p.id_proof_no }}</span>{% else %}—{% endif %}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

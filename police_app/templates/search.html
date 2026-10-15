@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Search{% endblock %}
+{% block content %}
+{% set total = complaints|length + evidence|length + persons|length + officers|length %}
+<div class="page-head"><div>
+  <div class="eyebrow">{{ m.icon('search', 'icon-sm') }} Global search</div>
+  <h1>Results for “{{ q }}”</h1>
+  <p>{{ total }} match{{ 'es' if total != 1 }} across complaints, evidence, persons and officers. Tip: type an exact CMP-… or EVD-… number to jump straight to it.</p>
+</div></div>
+{% if not total %}<div class="card">{{ m.empty('Nothing found', 'Try a name, phone number, complaint number or evidence number.', 'search') }}</div>{% endif %}
+<div class="grid g-2">
+  {% if complaints %}<div class="card result-group"><div class="card-head"><h3>{{ m.icon('folder') }} Complaints <span class="badge slate">{{ complaints|length }}</span></h3></div>
+    <div class="list">{% for c in complaints %}<a class="list-item" href="{{ url_for('complaints.detail', complaint_id=c.complaint_id) }}">
+      <span class="idtag">{{ c.complaint_no }}</span><div class="grow"><div class="t truncate">{{ c.title }}</div><div class="s">{{ c.complainant_name }} · {{ c.registered_at|d }}</div></div>{{ m.status_badge(c.status) }}</a>{% endfor %}</div></div>{% endif %}
+  {% if evidence %}<div class="card result-group"><div class="card-head"><h3>{{ m.icon('box') }} Evidence <span class="badge slate">{{ evidence|length }}</span></h3></div>
+    <div class="list">{% for e in evidence %}<a class="list-item" href="{{ url_for('evidence.detail', evidence_id=e.evidence_id) }}">
+      <span class="idtag">{{ e.evidence_no }}</span><div class="grow"><div class="t truncate">{{ e.description }}</div><div class="s">{{ e.complaint_no }} · with {{ e.current_holder }}</div></div>{{ m.ev_badge(e.evidence_status) }}</a>{% endfor %}</div></div>{% endif %}
+  {% if persons %}<div class="card result-group"><div class="card-head"><h3>{{ m.icon('users') }} Persons <span class="badge slate">{{ persons|length }}</span></h3></div>
+    <div class="list">{% for p in persons %}<a class="list-item" href="{{ url_for('persons.detail', person_id=p.person_id) }}">
+      {{ m.avatar(p.full_name, p.person_id, 'sm') }}<div class="grow"><div class="t">{{ p.full_name }}</div><div class="s truncate">{{ p.phone or '' }} {{ p.address }}</div></div></a>{% endfor %}</div></div>{% endif %}
+  {% if officers %}<div class="card result-group"><div class="card-head"><h3>{{ m.icon('shield') }} Officers <span class="badge slate">{{ officers|length }}</span></h3></div>
+    <div class="list">{% for o in officers %}<a class="list-item" href="{{ url_for('officers.detail', officer_id=o.officer_id) }}">
+      {{ m.avatar(o.full_name, o.officer_id, 'sm') }}<div class="grow"><div class="t">{{ o.full_name }}</div><div class="s">{{ o.officer_rank }} · {{ o.badge_no }} · {{ o.station_code }}</div></div></a>{% endfor %}</div></div>{% endif %}
+</div>
+{% endblock %}

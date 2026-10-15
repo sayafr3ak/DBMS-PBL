@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% set first = (g.user.full_name or g.user.username).split()[0] %}
+<section class="hero">
+  <svg class="shield-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><use href="#i-badge"/></svg>
+  <h1>Good {{ 'morning' if now.hour < 12 else ('afternoon' if now.hour < 17 else 'evening') }}, {{ first }}</h1>
+  <p>{{ now.strftime('%A, %d %B %Y') }} · {{ k.open_cases }} open cases across all stations,
+     {{ k.unassigned_cases }} awaiting an investigating officer and {{ k.hearings_30d }} court hearing{{ 's' if k.hearings_30d != 1 }} in the next 30 days.</p>
+  <div class="hero-stats">
+    <div><b>{{ k.new_30d }}</b><span>New complaints · 30 days</span></div>
+    <div><b>{{ k.transfers_30d }}</b><span>Custody transfers · 30 days</span></div>
+    <div><b>{{ k.avg_days_to_close or 0 }} days</b><span>Average time to close</span></div>
+    <div><b>{{ k.active_officers }}</b><span>Active officers</span></div>
+  </div>
+  <div class="hero-actions">
+    {% if can('complaint.create') %}<a class="btn btn-gold" href="{{ url_for('complaints.new') }}">{{ m.icon('file-plus') }} Register complaint</a>{% endif %}
+    {% if can('evidence.create') %}<a class="btn btn-light" href="{{ url_for('evidence.new') }}">{{ m.icon('box') }} Log evidence</a>{% endif %}
+  </div>
+</section>
+
+<div class="grid g-6 mb-3">
+  <a class="card kpi blue" href="{{ url_for('complaints.index') }}">
+    <div class="kpi-icon">{{ m.icon('folder') }}</div>
+    <div class="kpi-label">Total complaints</div><div class="kpi-value">{{ k.total_cases }}</div>
+    <div class="kpi-foot">{{ k.new_30d }} registered this month</div></a>
+  <a class="card kpi amber" href="{{ url_for('complaints.index', open=1) }}">
+    <div class="kpi-icon">{{ m.icon('hourglass') }}</div>
+    <div class="kpi-label">Open cases</div><div class="kpi-value">{{ k.open_cases }}</div>
+    <div class="kpi-foot">{{ k.critical_open }} critical priority</div></a>
+  <a class="card kpi green" href="{{ url_for('complaints.index', status='CLOSED') }}">
+    <div class="kpi-icon">{{ m.icon('check-circle') }}</div>
+    <div class="kpi-label">Closed</div><div class="kpi-value">{{ k.closed_cases }}</div>
+    <div class="kpi-foot">{{ ((k.closed_cases / k.total_cases * 100) if k.total_cases else 0)|round|int }}% closure rate</div></a>
+  <a class="card kpi red" href="{{ url_for('complaints.index', unassigned=1) }}">
+    <div class="kpi-icon">{{ m.icon('alert') }}</div>
+    <div class="kpi-label">Unassigned</div><div class="kpi-value">{{ k.unassigned_cases }}</div>
+    <div class="kpi-foot">Need an investigating officer</div></a>
+  <a class="card kpi violet" href="{{ url_for('evidence.index') }}">
+    <div class="kpi-icon">{{ m.icon('box') }}</div>
+    <div class="kpi-label">Evidence items</div><div class="kpi-value">{{ k.evidence_total }}</div>
+    <div class="kpi-foot">{{ k.evidence_active }} in active custody</div></a>
+  <a class="card kpi cyan" href="{{ url_for('evidence.index', status='IN_LAB') }}">
+    <div class="kpi-icon">{{ m.icon('flask') }}</div>
+    <div class="kpi-label">In forensic lab</div><div class="kpi-value">{{ k.evidence_in_lab }}</div>
+    <div class="kpi-foot">Awaiting analysis report</div></a>
+</div>
+
+<div class="grid g-3 mb-3">
+  {# --- status donut --- #}
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('pie') }} Case status</h2><span class="sub">All stations</span></div>
+    <div class="card-body">
+      {% set colors = {'REGISTERED': '#94a3b8', 'UNDER_INVESTIGATION': '#f5a623', 'CHARGE_SHEETED': '#8b5cf6', 'IN_COURT': '#06b6d4', 'CLOSED': '#12a150'} %}
+      {% set total = statuses|sum(attribute='n') %}
+      <div class="donut-wrap">
+        <svg class="donut" viewBox="0 0 42 42">
+          <circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-3)" stroke-width="5"></circle>
+          {% set ns = namespace(offset=25) %}
+          {% for s in statuses %}
+            {% set pct = (s.n / total * 100) if total else 0 %}
+            <circle cx="21" cy="21" r="15.915" fill="none" stroke="{{ colors[s.status] }}" stroke-width="5"
+                    stroke-dasharray="{{ '%.2f'|format(pct) }} {{ '%.2f'|format(100 - pct) }}" stroke-dashoffset="{{ '%.2f'|format(ns.offset) }}">
+              <title>{{ s.status|label }}: {{ s.n }}</title></circle>
+            {% set ns.offset = ns.offset - pct %}
+          {% endfor %}
+          <text x="21" y="21.5" text-anchor="middle" class="center-num" style="font-size:8px">{{ total }}</text>
+          <text x="21" y="27" text-anchor="middle" class="center-lbl" style="font-size:2.6px">CASES</text>
+        </svg>
+        <div class="legend">
+          {% for s in statuses %}
+          <a class="li" href="{{ url_for('complaints.index', status=s.status) }}" style="color:inherit">
+            <span class="sw" style="background:{{ colors[s.status] }}"></span>{{ s.status|label }}<b>{{ s.n }}</b></a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# --- monthly bars --- #}
+  <div class="card span-2">
+    <div class="card-head"><h2>{{ m.icon('chart') }} Registrations vs closures</h2>
+      <div class="chart-legend"><span><i style="background:#3d5afe"></i>Registered</span><span><i style="background:#12a150"></i>Closed</span></div></div>
+    <div class="card-body">
+      {% set mx = [monthly|map(attribute='registered')|max, monthly|map(attribute='closed')|max, 1]|max %}
+      <div class="bars">
+        {% for mo in monthly %}
+        <div class="col">
+          <div class="pair">
+            <div class="bar" style="height:0" data-h="{{ (mo.registered / mx * 100)|round }}%" data-v="{{ mo.registered }}"></div>
+            <div class="bar b2" style="height:0" data-h="{{ (mo.closed / mx * 100)|round }}%" data-v="{{ mo.closed }}"></div>
+          </div>
+          <div class="x">{{ mo.label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid g-3 mb-3">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('users') }} Officer workload</h2><a class="small" href="{{ url_for('reports.view', key='officer-load') }}">Full report →</a></div>
+    <div class="list">
+      {% for o in officers %}
+      <a class="list-item" href="{{ url_for('officers.detail', officer_id=o.officer_id) }}">
+        {{ m.avatar(o.full_name, o.officer_id, 'sm') }}
+        <div class="grow"><div class="t truncate">{{ o.full_name }}</div><div class="s truncate">{{ o.officer_rank }} · {{ o.station_name }}</div></div>
+        <div class="meter {{ 'hot' if o.active_cases >= 3 }}" title="{{ o.active_cases }} active cases">
+          {% for i in range(5) %}<i class="{{ 'on' if i < o.active_cases }}"></i>{% endfor %}
+        </div>
+        <b style="width:18px;text-align:right">{{ o.active_cases }}</b>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('layers') }} Crime categories</h2></div>
+    <div class="card-body">
+      {% set cmax = categories|map(attribute='n')|max if categories else 1 %}
+      <div class="hbars">
+        {% for c in categories[:6] %}
+        <div class="hbar">
+          <div class="top"><span>{{ c.category|label }}</span><b>{{ c.n }}</b></div>
+          <div class="track"><div class="fill" style="width:0" data-w="{{ (c.n / cmax * 100)|round }}%"></div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('alert') }} Needs attention</h2></div>
+    <div class="list">
+      {% for c in attention.unassigned %}
+      <a class="list-item" href="{{ url_for('complaints.detail', complaint_id=c.complaint_id) }}">
+        <span class="ico-chip red">{{ m.icon('user-plus', 'icon-sm') }}</span>
+        <div class="grow"><div class="t truncate">{{ c.title }}</div><div class="s">{{ c.complaint_no }} · unassigned {{ c.age }}d</div></div>
+        {{ m.priority(c.priority) }}
+      </a>
+      {% endfor %}
+      {% for e in attention.long_lab[:3] %}
+      <a class="list-item" href="{{ url_for('evidence.detail', evidence_id=e.evidence_id) }}">
+        <span class="ico-chip violet">{{ m.icon('flask', 'icon-sm') }}</span>
+        <div class="grow"><div class="t truncate">{{ e.evidence_no }} in lab</div><div class="s truncate">{{ e.description }}</div></div>
+        <span class="badge violet">{{ e.days_at_location }}d</span>
+      </a>
+      {% endfor %}
+      {% for h in attention.hearings[:3] %}
+      <a class="list-item" href="{{ url_for('complaints.detail', complaint_id=h.complaint_id, tab='legal') }}">
+        <span class="ico-chip cyan">{{ m.icon('gavel', 'icon-sm') }}</span>
+        <div class="grow"><div class="t truncate">Hearing · {{ h.court_case_no }}</div><div class="s truncate">{{ h.court_name }}</div></div>
+        <span class="badge cyan">{{ h.next_hearing_date|d('%d %b') }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h2>{{ m.icon('activity') }} Latest activity across cases</h2><span class="sub">From the case timeline view</span></div>
+  <div class="card-body">
+    <div class="timeline">
+      {% for e in events %}
+      <div class="tl-item {{ e.event_type }}">
+        <div class="tl-icon">{{ m.icon({'STATUS':'refresh','ASSIGNMENT':'user-plus','ACTIVITY':'activity','EVIDENCE':'box','CUSTODY':'transfer','WITNESS':'message','CHARGE':'scale','COURT':'gavel'}.get(e.event_type, 'info')) }}</div>
+        <div>
+          <div class="tl-title">{{ e.event_title }}</div>
+          <div class="tl-meta"><a href="{{ url_for('complaints.detail', complaint_id=e.complaint_id, tab='timeline') }}" class="idtag">{{ e.complaint_no }}</a>
+            <span>{{ m.icon('clock', 'icon-sm') }} {{ e.event_time|dt }} · {{ e.event_time|ago }}</span>{% if e.actor %}<span>{{ m.icon('user', 'icon-sm') }} {{ e.actor }}</span>{% endif %}</div>
+          {% if e.details %}<div class="tl-details">{{ e.details|truncate(180) }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ ev.evidence_no }}{% endblock %}
+{% block open_modal %}{{ 'm-' ~ form_state.form if form_state }}{% endblock %}
+{% block content %}
+{% set final = ev.current_purpose in C.FINAL_PURPOSES %}
+<div class="crumbs"><a href="{{ url_for('evidence.index') }}">Evidence</a>{{ m.icon('chevron-right', 'icon-sm') }}{{ ev.evidence_no }}</div>
+<div class="page-head">
+  <div>
+    <div class="row row-wrap"><span class="idtag" style="font-size:14px">{{ ev.evidence_no }}</span>{{ m.ev_badge(ev.evidence_status) }}
+      <span class="badge outline">{{ m.icon('tag', 'icon-sm') }} {{ ev.category|label }}</span>
+      {% if ev.seal_no %}<span class="badge {{ 'green' if ev.seal_intact else 'red' }}">{{ m.icon('lock', 'icon-sm') }} Seal {{ ev.seal_no }} {{ 'intact' if ev.seal_intact else 'BROKEN' }}</span>{% endif %}</div>
+    <h1 class="mt-2">{{ ev.description }}</h1>
+    <p>Case <a href="{{ url_for('complaints.detail', complaint_id=ev.complaint_id, tab='evidence') }}">{{ ev.complaint_no }}</a> — {{ ev.complaint_title }}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('evidence.label', evidence_id=ev.evidence_id) }}" target="_blank">{{ m.icon('printer') }} Custody sheet</a>
+    {% if can('evidence.create') and ev.case_status != 'CLOSED' %}<button class="btn" data-open="m-edit">{{ m.icon('edit') }} Edit</button>{% endif %}
+    {% if can('custody.transfer') and not final %}<button class="btn btn-primary" data-open="m-transfer">{{ m.icon('transfer') }} Transfer custody</button>{% endif %}
+  </div>
+</div>
+
+<div class="grid g-main-wide">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('link') }} Chain of custody <span class="sub">{{ chain|length }} custody period{{ 's' if chain|length != 1 }} · append-only log</span></h2>
+      <a class="btn btn-sm" href="{{ url_for('reports.view', key='custody-history', evidence=ev.evidence_id) }}">{{ m.icon('chart') }} As report</a></div>
+    <div class="card-body">
+      <div class="chain">
+        {% for s in chain %}
+        {% set is_cur = s.released_at is none %}
+        <div class="chain-node {{ 'seizure' if s.purpose == 'INITIAL_SEIZURE' }} {{ 'current' if is_cur and s.purpose not in C.FINAL_PURPOSES }} {{ 'final' if s.purpose in C.FINAL_PURPOSES }}">
+          <div class="rail"><div class="ring" title="{{ s.to_name }}">{{ s.to_name|initials }}</div><div class="link-line"></div></div>
+          <div class="chain-card">
+            <div class="top">
+              <div><div class="who">{{ s.to_name }} <span class="muted small">· {{ s.to_rank }} · {{ s.to_badge }}</span></div>
+                <div class="small muted">{% if s.from_name %}Received from <b>{{ s.from_name }}</b>{% else %}Seized at collection{% endif %}</div></div>
+              <div class="row"><span class="badge {{ {'INITIAL_SEIZURE':'amber','STORAGE':'slate','FORENSIC_ANALYSIS':'violet','INVESTIGATION':'blue','COURT_PRODUCTION':'cyan','RETURN_TO_OWNER':'green','DISPOSAL':'red'}[s.purpose] }}">{{ s.purpose|label }}</span>
+                {% if is_cur %}<span class="badge green"><span class="dot"></span>{{ 'Final' if s.purpose in C.FINAL_PURPOSES else 'Current' }}</span>{% endif %}</div>
+            </div>
+            <div class="facts">
+              <div><b>Location</b>{{ s.location }}</div>
+              <div><b>Received</b>{{ s.received_at|dt }}</div>
+              <div><b>{{ 'Released' if s.released_at else 'Held for' }}</b>{{ s.released_at|dt if s.released_at else (s.hours_held|round(1) ~ ' h') }}</div>
+            </div>
+            {% if s.remarks or not s.seal_intact %}<div class="small mt-2" style="color:var(--text-2)">
+              {% if not s.seal_intact %}<span class="badge red">{{ m.icon('alert', 'icon-sm') }} Seal broken</span> {% endif %}{{ s.remarks or '' }}</div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="loc-card {{ 'final' if final else ('lab' if ev.evidence_status == 'IN_LAB' else '') }}">
+      <div class="lbl">{{ 'Final disposition' if final else 'Current location' }}</div>
+      <div class="val">{{ m.icon('map-pin') }} {{ ev.current_location }}</div>
+      <div class="sub">{{ ev.evidence_status|label }} · held by {{ ev.current_holder }} ({{ ev.holder_badge }})</div>
+      <div class="sub">Since {{ ev.held_since|dt }} · {{ ev.days_at_location }} day{{ 's' if ev.days_at_location != 1 }}</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>{{ m.icon('file') }} Item details</h3></div>
+      <div class="card-body">
+        <dl class="dl">
+          <dt>Evidence no.</dt><dd class="mono">{{ ev.evidence_no }}</dd>
+          <dt>Category</dt><dd>{{ ev.category|label }}</dd>
+          <dt>Quantity</dt><dd>{{ ev.quantity }}</dd>
+          <dt>Condition</dt><dd>{{ ev.item_condition|label }}</dd>
+          <dt>Seal no.</dt><dd>{{ ev.seal_no or '—' }}</dd>
+          <dt>Collected</dt><dd>{{ ev.collected_at|dt }}</dd>
+          <dt>Collected by</dt><dd>{{ ev.collected_by_name }} ({{ ev.collector_badge }})</dd>
+          <dt>Collected from</dt><dd>{{ ev.collected_from }}</dd>
+          <dt>Registered</dt><dd>{{ ev.registered_at|dt }}</dd>
+          <dt>Transfers</dt><dd>{{ ev.transfer_count }}</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="alert info">{{ m.icon('shield-check') }}<div>Custody rules enforced in MySQL: the handing officer must be the current holder, the new period starts exactly when the old one ends, periods never overlap, and closed records cannot be edited or deleted.</div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% set fs = form_state %}
+{% if can('custody.transfer') %}
+<dialog class="modal" id="m-transfer">
+  <form method="post" action="{{ url_for('evidence.transfer', evidence_id=ev.evidence_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip blue">{{ m.icon('transfer') }}</span>
+      <div><h2>Transfer custody</h2><p>Atomic: closes {{ ev.current_holder }}'s custody period and opens the new one in a single transaction.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'transfer') }}
+      <div class="picked mb-3" style="border-style:solid">
+        {{ m.avatar(ev.current_holder, ev.holder_id, 'sm') }}
+        <div><div class="tiny muted">HANDING OVER (current custodian)</div><div class="strong">{{ ev.current_holder }} · {{ ev.holder_badge }}</div></div>
+        <span class="x">{{ m.icon('arrow-right') }}</span>
+      </div>
+      {% set receivers = [] %}{% for o in officers if o.officer_id != ev.holder_id %}{% set _ = receivers.append((o.officer_id, o.full_name ~ ' · ' ~ o.officer_rank ~ ' · ' ~ o.station_code)) %}{% endfor %}
+      <div class="form-grid">
+        {{ m.select(fs, 'transfer', 'to_officer_id', 'Receiving officer', receivers, required=True, empty='Select…', cls='full') }}
+        {{ m.select(fs, 'transfer', 'purpose', 'Purpose', opts(C.TRANSFER_PURPOSES), required=True, empty='Select…') }}
+        {{ m.input(fs, 'transfer', 'transfer_at', 'Transfer time', type='datetime-local', required=True, attrs='data-default-now',
+                   help='Must be after ' ~ (ev.held_since|dt)) }}
+        {{ m.input(fs, 'transfer', 'location', 'New location', required=True, cls='full', placeholder='e.g. Regional Forensic Science Laboratory, Pune') }}
+        <div class="full">{{ m.checkbox(fs, 'transfer', 'seal_intact', 'Seal verified intact at hand-over', checked=True) }}</div>
+        {{ m.textarea(fs, 'transfer', 'remarks', 'Remarks', rows=2, cls='full', placeholder='Docket / letter no., court order (mandatory if seal broken, returned or disposed)') }}
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('transfer') }} Transfer</button></div>
+  </form>
+</dialog>
+{% endif %}
+<dialog class="modal" id="m-edit">
+  <form method="post" action="{{ url_for('evidence.edit', evidence_id=ev.evidence_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip">{{ m.icon('edit') }}</span>
+      <div><h2>Edit evidence details</h2><p>The evidence number and collection details are permanent.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'edit') }}
+      <div class="form-grid">
+        {{ m.textarea(fs, 'edit', 'description', 'Description', value=ev.description, required=True, rows=3, cls='full') }}
+        {{ m.input(fs, 'edit', 'quantity', 'Quantity', type='number', value=ev.quantity, required=True) }}
+        {{ m.select(fs, 'edit', 'item_condition', 'Condition', opts(C.CONDITIONS), value=ev.item_condition, required=True) }}
+        {{ m.input(fs, 'edit', 'seal_no', 'Seal number', value=ev.seal_no, cls='full') }}
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Save</button></div>
+  </form>
+</dialog>
+{% endblock %}

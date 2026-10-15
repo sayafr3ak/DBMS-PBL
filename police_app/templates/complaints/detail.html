@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ c.complaint_no }}{% endblock %}
+{% block open_modal %}{{ 'm-' ~ form_state.form if form_state }}{% endblock %}
+{% block active_tab %}{{ tab }}{% endblock %}
+
+{% block content %}
+{% set fs = form_state %}
+{% set is_closed = c.status == 'CLOSED' %}
+{% set lead = active_officers|selectattr('assignment_role', 'equalto', 'LEAD')|first %}
+{% set evicons = {'STATUS':'refresh','ASSIGNMENT':'user-plus','ACTIVITY':'activity','EVIDENCE':'box','CUSTODY':'transfer','WITNESS':'message','CHARGE':'scale','COURT':'gavel'} %}
+<div class="crumbs"><a href="{{ url_for('complaints.index') }}">Complaints</a>{{ m.icon('chevron-right', 'icon-sm') }}<span>{{ c.complaint_no }}</span></div>
+
+<div class="card mb-3">
+  <div class="case-head">
+    <div style="min-width:0">
+      <div class="row row-wrap">
+        <span class="idtag" style="font-size:14px">{{ c.complaint_no }}</span>
+        {{ m.status_badge(c.status) }} {{ m.priority(c.priority) }}
+        <span class="badge outline">{{ m.icon('tag', 'icon-sm') }} {{ c.category|label }}</span>
+      </div>
+      <div class="case-title">{{ c.title }}</div>
+      <div class="meta">
+        <span>{{ m.icon('building', 'icon-sm') }} {{ c.station_name }}</span>
+        <span>{{ m.icon('user', 'icon-sm') }} <a href="{{ url_for('persons.detail', person_id=c.complainant_id) }}">{{ c.complainant_name }}</a></span>
+        <span>{{ m.icon('calendar', 'icon-sm') }} Registered {{ c.registered_at|dt }}</span>
+        <span>{{ m.icon('clock', 'icon-sm') }} {{ c.age_days }} days {{ 'to close' if is_closed else 'open' }}</span>
+        <span>{{ m.icon('shield', 'icon-sm') }} {{ ('Lead: ' ~ lead.full_name) if lead else ('No lead officer' if not is_closed else 'Team relieved') }}</span>
+      </div>
+    </div>
+    <div class="page-actions" style="align-items:flex-start">
+      {% if can('complaint.status') and transitions %}
+        <button class="btn btn-primary" data-open="m-status">{{ m.icon('refresh') }} {{ 'Re-open case' if is_closed else 'Update status' }}</button>
+      {% endif %}
+      {% if can('complaint.edit') and not is_closed %}
+        <a class="btn" href="{{ url_for('complaints.edit', complaint_id=c.complaint_id) }}">{{ m.icon('edit') }} Edit</a>
+      {% endif %}
+      <a class="btn" href="{{ url_for('complaints.print_case', complaint_id=c.complaint_id) }}" target="_blank">{{ m.icon('printer') }} Case file</a>
+    </div>
+  </div>
+  {% set reached = {} %}
+  {% for h in history %}{% set _ = reached.update({h.new_status: h.changed_at}) %}{% endfor %}
+  <div class="stepper">
+    {% for s, l in C.STATUSES.items() %}
+      {% set cls = ('closed' if s == 'CLOSED' else 'current') if s == c.status else ('done' if s in reached and loop.index0 < (C.STATUSES.keys()|list).index(c.status) else '') %}
+      <div class="step-item {{ cls }}">
+        <div class="bubble">{% if cls in ('done', 'closed') %}{{ m.icon('check', 'icon-sm') }}{% else %}{{ loop.index }}{% endif %}</div>
+        <div class="lbl">{{ l }}</div>
+        <div class="when">{{ reached[s]|d('%d %b %Y') if s in reached else '—' }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if is_closed %}
+<div class="alert success mb-3">{{ m.icon('check-circle') }}
+  <div><b>Closed on {{ c.closure_date|d }} — {{ c.closure_type|label }}</b> · by {{ c.closed_by_name }}<br>{{ c.closure_remarks }}</div>
+</div>
+{% endif %}
+
+<nav class="tabs">
+  <a data-tab="overview">{{ m.icon('eye', 'icon-sm') }} Overview</a>
+  <a data-tab="officers">{{ m.icon('shield', 'icon-sm') }} Officers <span class="n">{{ active_officers|length }}</span></a>
+  <a data-tab="activities">{{ m.icon('activity', 'icon-sm') }} Investigation diary <span class="n">{{ activities|length }}</span></a>
+  <a data-tab="evidence">{{ m.icon('box', 'icon-sm') }} Evidence <span class="n">{{ evidence|length }}</span></a>
+  <a data-tab="people">{{ m.icon('users', 'icon-sm') }} Accused &amp; witnesses <span class="n">{{ accused|length + witnesses|length }}</span></a>
+  <a data-tab="legal">{{ m.icon('gavel', 'icon-sm') }} Charges &amp; court <span class="n">{{ charges|length + courts|length }}</span></a>
+  <a data-tab="timeline">{{ m.icon('clock', 'icon-sm') }} Timeline</a>
+  <a data-tab="history">{{ m.icon('refresh', 'icon-sm') }} Status audit</a>
+</nav>
+
+{# ======================= OVERVIEW ======================= #}
+<section class="tab-panel" data-panel="overview">
+  <div class="grid g-main">
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h3>{{ m.icon('file') }} Complaint narrative</h3></div>
+        <div class="card-body">
+          <div class="desc-block">{{ c.description }}</div>
+          <dl class="dl mt-3">
+            <dt>Incident date/time</dt><dd>{{ c.incident_datetime|dt }}</dd>
+            <dt>Incident location</dt><dd>{{ m.icon('map-pin', 'icon-sm') }} {{ c.incident_location }}</dd>
+            <dt>Registered by</dt><dd>{{ c.registered_by_name or '—' }} on {{ c.registered_at|dt }}</dd>
+            <dt>Station</dt><dd>{{ c.station_name }} <span class="muted">({{ c.station_code }}, {{ c.district }})</span></dd>
+          </dl>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>{{ m.icon('activity') }} Recent investigation activity</h3>
+          <a class="small" href="#" data-goto-tab="activities">View diary →</a></div>
+        <div class="card-body">
+          {% if activities %}
+          <div class="timeline">
+            {% for a in activities[:3] %}
+            <div class="tl-item ACTIVITY"><div class="tl-icon">{{ m.icon('activity') }}</div>
+              <div><div class="tl-title">{{ a.activity_type|label }}</div>
+                <div class="tl-meta"><span>{{ a.activity_time|dt }}</span><span>{{ a.full_name }}</span></div>
+                <div class="tl-details">{{ a.description }}</div></div></div>
+            {% endfor %}
+          </div>
+          {% else %}{{ m.empty('No activity yet', 'Log the first investigation activity from the diary tab.', 'activity') }}{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h3>{{ m.icon('user') }} Complainant</h3></div>
+        <div class="card-body">
+          <div class="row">{{ m.avatar(c.complainant_name, c.complainant_id, 'lg') }}
+            <div><div class="strong">{{ c.complainant_name }}</div>
+              <div class="small muted">{{ C.GENDERS.get(c.complainant_gender, '') }}{% if c.complainant_phone %} · {{ c.complainant_phone }}{% endif %}</div></div></div>
+          <div class="small muted mt-2">{{ m.icon('map-pin', 'icon-sm') }} {{ c.complainant_address }}</div>
+          {% if c.id_proof_type %}<div class="small mt-1"><span class="badge outline">{{ c.id_proof_type|label }}</span> <span class="mono">{{ c.id_proof_no[:4] }}••••{{ c.id_proof_no[-3:] }}</span></div>{% endif %}
+        </div>
+      </div>
+      <div class="grid g-2">
+        <div class="card kpi violet"><div class="kpi-icon">{{ m.icon('box') }}</div><div class="kpi-label">Evidence</div><div class="kpi-value">{{ evidence|length }}</div></div>
+        <div class="card kpi green"><div class="kpi-icon">{{ m.icon('message') }}</div><div class="kpi-label">Witnesses</div><div class="kpi-value">{{ witnesses|length }}</div></div>
+        <div class="card kpi amber"><div class="kpi-icon">{{ m.icon('activity') }}</div><div class="kpi-label">Activities</div><div class="kpi-value">{{ activities|length }}</div></div>
+        <div class="card kpi red"><div class="kpi-icon">{{ m.icon('scale') }}</div><div class="kpi-label">Charges</div><div class="kpi-value">{{ charges|length }}</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>{{ m.icon('shield') }} Investigation team</h3></div>
+        <div class="card-body">
+          {% for a in active_officers %}
+          <div class="person-row">{{ m.avatar(a.full_name, a.officer_id, 'sm') }}
+            <div><div class="name">{{ a.full_name }}</div><div class="info">{{ a.officer_rank }} · {{ a.station_code }}</div></div>
+            <div class="actions"><span class="badge {{ 'blue' if a.assignment_role == 'LEAD' else 'slate' }}">{{ a.assignment_role|label }}</span></div></div>
+          {% else %}<p class="muted small">No officer is currently assigned.</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ======================= OFFICERS ======================= #}
+<section class="tab-panel" data-panel="officers">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('shield') }} Officer assignments <span class="sub">Active and historical</span></h2>
+      {% if can('complaint.assign') and not is_closed %}<button class="btn btn-primary btn-sm" data-open="m-assign">{{ m.icon('user-plus') }} Assign officer</button>{% endif %}</div>
+    {% if assignments %}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Officer</th><th>Role</th><th>Assigned</th><th>Relieved</th><th>Assigned by</th><th>Remarks</th><th></th></tr></thead>
+      <tbody>
+      {% for a in assignments %}
+      <tr>
+        <td><a class="row" href="{{ url_for('officers.detail', officer_id=a.officer_id) }}" style="color:inherit">{{ m.avatar(a.full_name, a.officer_id, 'sm') }}
+          <span><b>{{ a.full_name }}</b><br><span class="tiny muted">{{ a.badge_no }} · {{ a.officer_rank }} · {{ a.station_code }}</span></span></a></td>
+        <td><span class="badge {{ 'blue' if a.assignment_role == 'LEAD' else ('violet' if a.assignment_role == 'FORENSIC' else 'slate') }}">{{ a.assignment_role|label }}</span></td>
+        <td class="small nowrap">{{ a.assigned_at|dt }}</td>
+        <td class="small nowrap">{% if a.relieved_at %}{{ a.relieved_at|dt }}{% else %}<span class="badge green"><span class="dot"></span>Active</span>{% endif %}</td>
+        <td class="small">{{ a.assigned_by_name or '—' }}</td>
+        <td class="small">{{ a.remarks or '' }}</td>
+        <td class="right">{% if not a.relieved_at and can('complaint.assign') %}
+          <form method="post" class="inline-form" action="{{ url_for('complaints.relieve', complaint_id=c.complaint_id, assignment_id=a.assignment_id) }}"
+                data-confirm="Relieve {{ a.full_name }} from this case?">{{ m.csrf() }}
+            <button class="btn btn-sm btn-ghost" type="submit">{{ m.icon('logout') }} Relieve</button></form>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody></table></div>
+    {% else %}{{ m.empty('No officers assigned', 'Assign a lead investigating officer to start the investigation.', 'user-plus') }}{% endif %}
+  </div>
+</section>
+
+{# ======================= ACTIVITIES ======================= #}
+<section class="tab-panel" data-panel="activities">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('activity') }} Investigation diary <span class="sub">Case diary entries, newest first</span></h2>
+      {% if can('activity.log') and not is_closed %}<button class="btn btn-primary btn-sm" data-open="m-activity">{{ m.icon('plus') }} Log activity</button>{% endif %}</div>
+    <div class="card-body">
+      {% if activities %}
+      <div class="timeline">
+        {% for a in activities %}
+        <div class="tl-item ACTIVITY">
+          <div class="tl-icon">{{ m.icon({'RAID':'zap','ARREST':'lock','CCTV_REVIEW':'eye','SITE_VISIT':'map-pin','STATEMENT_RECORDED':'message','EVIDENCE_COLLECTION':'box','FORENSIC_REQUEST':'flask','MEDICAL_EXAM':'activity','INTERROGATION':'users'}.get(a.activity_type, 'activity')) }}</div>
+          <div>
+            <div class="tl-title">{{ a.activity_type|label }}{% if a.location %} <span class="muted small">· {{ a.location }}</span>{% endif %}</div>
+            <div class="tl-meta"><span>{{ m.icon('clock', 'icon-sm') }} {{ a.activity_time|dt }}</span><span>{{ m.icon('user', 'icon-sm') }} {{ a.full_name }} ({{ a.badge_no }})</span></div>
+            <div class="tl-details">{{ a.description }}</div>
+            {% if a.outcome %}<div class="mt-1"><span class="badge green">{{ m.icon('check', 'icon-sm') }} {{ a.outcome }}</span></div>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}{{ m.empty('Diary is empty', 'Every site visit, statement, raid or arrest should be logged here.', 'activity') }}{% endif %}
+    </div>
+  </div>
+</section>
+
+{# ======================= EVIDENCE ======================= #}
+<section class="tab-panel" data-panel="evidence">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('box') }} Evidence items <span class="sub">Current location derived from the chain of custody</span></h2>
+      {% if can('evidence.create') and not is_closed %}<a class="btn btn-primary btn-sm" href="{{ url_for('evidence.new', complaint=c.complaint_id) }}">{{ m.icon('plus') }} Register evidence</a>{% endif %}</div>
+    {% if evidence %}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Evidence</th><th>Description</th><th>Category</th><th>Status</th><th>Current holder</th><th>Location</th><th class="right">Transfers</th></tr></thead>
+      <tbody>
+      {% for e in evidence %}
+      <tr class="clickable" data-href="{{ url_for('evidence.detail', evidence_id=e.evidence_id) }}">
+        <td><a class="idtag" href="{{ url_for('evidence.detail', evidence_id=e.evidence_id) }}">{{ e.evidence_no }}</a></td>
+        <td class="title-cell" style="max-width:300px">{{ e.description }}<small>Seal {{ e.seal_no or '—' }} · qty {{ e.quantity }}</small></td>
+        <td class="small">{{ e.category|label }}</td>
+        <td>{{ m.ev_badge(e.evidence_status) }}</td>
+        <td class="small">{{ e.current_holder }}</td>
+        <td class="small">{{ e.current_location }}</td>
+        <td class="right">{{ e.transfer_count }}</td>
+      </tr>
+      {% endfor %}
+      </tbody></table></div>
+    {% else %}{{ m.empty('No evidence registered', 'Register seized items to start their chain of custody.', 'box') }}{% endif %}
+  </div>
+</section>
+
+{# ======================= PEOPLE ======================= #}
+<section class="tab-panel" data-panel="people">
+  <div class="grid g-2">
+    <div class="card">
+      <div class="card-head"><h2>{{ m.icon('lock') }} Accused</h2>
+        {% if can('accused.manage') and not is_closed %}<button class="btn btn-sm" data-open="m-accused">{{ m.icon('plus') }} Add accused</button>{% endif %}</div>
+      <div class="card-body">
+        {% for a in accused %}
+        <div class="person-row">
+          {{ m.avatar(a.full_name, a.person_id) }}
+          <div style="min-width:0"><a class="name" href="{{ url_for('persons.detail', person_id=a.person_id) }}">{{ a.full_name }}</a>
+            <div class="info">{{ a.address }}{% if a.charge_count %} · {{ a.charge_count }} charge{{ 's' if a.charge_count != 1 }}{% endif %}</div></div>
+          <div class="actions">
+            {% if can('accused.manage') %}
+            <form method="post" action="{{ url_for('complaints.accused_status', complaint_id=c.complaint_id, person_id=a.person_id) }}">{{ m.csrf() }}
+              <select class="input" name="accused_status" style="height:31px;font-size:12.5px;width:130px" data-autosubmit>
+                {% for k, v in C.ACCUSED_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if a.accused_status == k }}>{{ v }}</option>{% endfor %}
+              </select></form>
+            {% if not is_closed and not a.charge_count %}
+            <form method="post" action="{{ url_for('complaints.delete_accused', complaint_id=c.complaint_id, person_id=a.person_id) }}"
+                  data-confirm="Remove {{ a.full_name }} as accused?">{{ m.csrf() }}
+              <button class="btn btn-sm btn-ghost" title="Remove">{{ m.icon('trash') }}</button></form>{% endif %}
+            {% else %}<span class="badge amber">{{ a.accused_status|label }}</span>{% endif %}
+          </div>
+        </div>
+        {% else %}<p class="muted small">No accused recorded.</p>{% endfor %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>{{ m.icon('message') }} Witnesses</h2>
+        {% if can('witness.manage') and not is_closed %}<button class="btn btn-sm" data-open="m-witness">{{ m.icon('plus') }} Record statement</button>{% endif %}</div>
+      <div class="card-body">
+        {% for w in witnesses %}
+        <div class="person-row" style="align-items:flex-start">
+          {{ m.avatar(w.witness_name, w.person_id) }}
+          <div style="min-width:0">
+            <a class="name" href="{{ url_for('persons.detail', person_id=w.person_id) }}">{{ w.witness_name }}</a>
+            {% if w.is_protected %}<span class="badge violet">{{ m.icon('lock', 'icon-sm') }} Protected</span>{% endif %}
+            <div class="info">{{ w.statement_date|dt }} · recorded by {{ w.recorded_by }}</div>
+            <div class="small mt-1" style="color:var(--text-2)">“{{ w.statement }}”</div>
+          </div>
+          {% if can('witness.manage') and not is_closed %}
+          <div class="actions"><form method="post" action="{{ url_for('complaints.delete_witness', complaint_id=c.complaint_id, witness_id=w.witness_id) }}"
+               data-confirm="Remove this witness statement?">{{ m.csrf() }}<button class="btn btn-sm btn-ghost" title="Remove">{{ m.icon('trash') }}</button></form></div>
+          {% endif %}
+        </div>
+        {% else %}<p class="muted small">No witness statements yet.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ======================= LEGAL ======================= #}
+<section class="tab-panel" data-panel="legal">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>{{ m.icon('scale') }} Charges framed</h2>
+        {% if can('charge.manage') and c.status in ('UNDER_INVESTIGATION', 'CHARGE_SHEETED', 'IN_COURT') and accused %}
+        <button class="btn btn-sm" data-open="m-charge">{{ m.icon('plus') }} Frame charge</button>{% endif %}</div>
+      {% if charges %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Accused</th><th>Act</th><th>Section</th><th>Offence</th><th>Charged on</th><th>By</th><th></th></tr></thead>
+        <tbody>{% for ch in charges %}
+        <tr><td class="strong">{{ ch.accused_name }}</td><td><span class="badge red">{{ ch.act_name }}</span></td>
+          <td class="mono">{{ ch.section_code }}</td><td>{{ ch.offence_description }}</td><td class="small">{{ ch.charged_on|d }}</td>
+          <td class="small">{{ ch.charged_by_name }}</td>
+          <td class="right">{% if c.status == 'UNDER_INVESTIGATION' and can('charge.manage') %}
+            <form method="post" action="{{ url_for('complaints.delete_charge', complaint_id=c.complaint_id, charge_id=ch.charge_id) }}" data-confirm="Withdraw this charge?">
+              {{ m.csrf() }}<button class="btn btn-sm btn-ghost">{{ m.icon('trash') }}</button></form>{% endif %}</td></tr>
+        {% endfor %}</tbody></table></div>
+      {% else %}
+        {{ m.empty('No charges framed', 'Add accused persons, then frame charges under BNS / special acts. A case cannot be charge-sheeted without one.', 'scale') }}
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>{{ m.icon('gavel') }} Court references</h2>
+        {% if can('court.manage') and c.status in ('CHARGE_SHEETED', 'IN_COURT') %}
+        <button class="btn btn-sm" data-open="m-court">{{ m.icon('plus') }} Add court reference</button>{% endif %}</div>
+      <div class="card-body">
+        {% for cr in courts %}
+        <div class="chain-card">
+          <div class="top"><div><div class="who">{{ cr.court_name }}</div><div class="small muted">Case No. <span class="mono">{{ cr.court_case_no }}</span> · {{ cr.court_type|label }}</div></div>
+            <div class="row">{{ m.status_badge('IN_COURT') if cr.case_stage != 'DISPOSED' else '' }}
+              <span class="badge {{ 'green' if cr.verdict == 'CONVICTED' else ('slate' if cr.verdict == 'PENDING' else 'amber') }}">{{ cr.verdict|label }}</span>
+              {% if can('court.manage') %}<button class="btn btn-sm btn-ghost" data-open="m-court-{{ cr.court_ref_id }}">{{ m.icon('edit') }} Update</button>{% endif %}</div></div>
+          <div class="facts"><div><b>Filed</b>{{ cr.filing_date|d }}</div><div><b>Next hearing</b>{{ cr.next_hearing_date|d }}</div>
+            <div><b>Stage</b>{{ cr.case_stage|label }}</div><div><b>Judge</b>{{ cr.judge_name or '—' }}</div></div>
+        </div>
+        {% else %}<p class="muted small">No court reference yet. It can be added once the case is charge-sheeted.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ======================= TIMELINE ======================= #}
+<section class="tab-panel" data-panel="timeline">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('clock') }} Case timeline <span class="sub">from view <code>v_case_timeline</code> — {{ timeline|length }} events</span></h2>
+      <a class="btn btn-sm" href="{{ url_for('reports.view', key='case-timeline', complaint=c.complaint_id) }}">{{ m.icon('chart') }} As report</a></div>
+    <div class="card-body">
+      <div class="timeline">
+        {% set ns = namespace(day=None) %}
+        {% for e in timeline %}
+          {% if ns.day != e.event_time.date() %}{% set ns.day = e.event_time.date() %}<div class="tl-date-sep">{{ e.event_time|d('%A, %d %B %Y') }}</div>{% endif %}
+          <div class="tl-item {{ e.event_type }}">
+            <div class="tl-icon">{{ m.icon(evicons.get(e.event_type, 'info')) }}</div>
+            <div><div class="tl-title">{{ e.event_title }}</div>
+              <div class="tl-meta"><span class="badge outline" style="height:20px">{{ e.event_type|title }}</span><span>{{ e.event_time|dt('%H:%M') }}</span>{% if e.actor %}<span>{{ e.actor }}</span>{% endif %}</div>
+              {% if e.details %}<div class="tl-details">{{ e.details }}</div>{% endif %}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ======================= HISTORY ======================= #}
+<section class="tab-panel" data-panel="history">
+  <div class="card">
+    <div class="card-head"><h2>{{ m.icon('refresh') }} Status audit trail <span class="sub">Written by trigger <code>trg_complaint_au</code> — rows cannot be edited or deleted</span></h2></div>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>#</th><th>When</th><th>From</th><th>To</th><th>Changed by</th><th>Remarks</th></tr></thead>
+      <tbody>{% for h in history %}
+        <tr><td class="muted">{{ loop.index }}</td><td class="small nowrap">{{ h.changed_at|dt }}</td>
+          <td>{{ m.status_badge(h.old_status) if h.old_status else '—' }}</td><td>{{ m.status_badge(h.new_status) }}</td>
+          <td class="small">{{ h.changed_by_name or 'System' }}</td><td class="small">{{ h.remarks or '' }}</td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+</section>
+{% endblock %}
+
+{% block modals %}
+{% set fs = form_state %}
+{% set is_closed = c.status == 'CLOSED' %}
+{% set lead = active_officers|selectattr('assignment_role', 'equalto', 'LEAD')|first %}
+{% set evicons = {'STATUS':'refresh','ASSIGNMENT':'user-plus','ACTIVITY':'activity','EVIDENCE':'box','CUSTODY':'transfer','WITNESS':'message','CHARGE':'scale','COURT':'gavel'} %}
+{% set my_officer = g.user.officer_id %}
+{# ---------- status ---------- #}
+{% if can('complaint.status') and transitions %}
+<dialog class="modal" id="m-status">
+  <form method="post" action="{{ url_for('complaints.change_status', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip blue">{{ m.icon('refresh') }}</span>
+      <div><h2>{{ 'Re-open case' if is_closed else 'Update case status' }}</h2><p>Current status: {{ c.status|label }}. Only valid next steps are listed.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'status') }}
+      {% set allowed = [] %}
+      {% for t in transitions %}{% if t != 'CLOSED' or can('complaint.close') %}{% set _ = allowed.append((t, C.STATUSES[t])) %}{% endif %}{% endfor %}
+      <div class="form-grid">
+        {{ m.select(fs, 'status', 'new_status', 'New status', allowed, required=True, cls='full', attrs='data-status-select=closure-box') }}
+        {{ m.textarea(fs, 'status', 'remarks', 'Remarks (saved in audit trail)', rows=2, cls='full', placeholder='Reason for the change') }}
+      </div>
+      <div id="closure-box" hidden class="mt-3">
+        <div class="alert warn mb-3">{{ m.icon('info') }}<div>Closure details are mandatory — the database rejects a CLOSED case without them (<code>chk_complaint_closure</code>). All active officers will be relieved in the same transaction.</div></div>
+        <div class="form-grid">
+          {{ m.select(fs, 'status', 'closure_type', 'Closure type', opts(C.CLOSURE_TYPES), required=True, empty='Select…') }}
+          {{ m.input(fs, 'status', 'closure_date', 'Closure date', type='date', required=True, attrs='data-default-today data-max-today') }}
+          {{ m.select(fs, 'status', 'closed_by', 'Closing officer', officer_opts(officers), value=my_officer, required=True, empty='Select…', cls='full') }}
+          {{ m.textarea(fs, 'status', 'closure_remarks', 'Closure remarks', required=True, rows=3, cls='full', placeholder='Final outcome, court order reference…') }}
+        </div>
+      </div>
+      <div class="small muted mt-2">Rules: Under investigation needs an assigned officer · Charge-sheeted needs at least one charge · In court needs a court reference.</div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Save status</button></div>
+  </form>
+</dialog>
+{% endif %}
+
+{# ---------- assign officer ---------- #}
+<dialog class="modal" id="m-assign">
+  <form method="post" action="{{ url_for('complaints.assign', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip violet">{{ m.icon('user-plus') }}</span>
+      <div><h2>Assign officer</h2><p>Only one active LEAD per case is allowed (unique index on a generated column).</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'assign') }}
+      <div class="form-grid">
+        {{ m.select(fs, 'assign', 'officer_id', 'Officer', officer_opts(officers), required=True, empty='Select officer…', cls='full') }}
+        {{ m.select(fs, 'assign', 'assignment_role', 'Role', opts(C.ASSIGNMENT_ROLES), value='SUPPORT' if lead else 'LEAD', required=True) }}
+        {{ m.input(fs, 'assign', 'remarks', 'Remarks', placeholder='Optional') }}
+        {% if lead %}<div class="full">{{ m.checkbox(fs, 'assign', 'replace_lead', 'Replace current lead (' ~ lead.full_name ~ ') if role is LEAD', help='The current lead is relieved in the same transaction.') }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Assign</button></div>
+  </form>
+</dialog>
+
+{# ---------- activity ---------- #}
+<dialog class="modal" id="m-activity">
+  <form method="post" action="{{ url_for('complaints.add_activity', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip amber">{{ m.icon('activity') }}</span>
+      <div><h2>Log investigation activity</h2><p>Only officers assigned to the case at that time can log activities (trigger <code>trg_activity_bi</code>).</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'activity') }}
+      {% set team = [] %}{% for a in active_officers %}{% set _ = team.append((a.officer_id, a.full_name ~ ' · ' ~ a.assignment_role|label)) %}{% endfor %}
+      <div class="form-grid">
+        {{ m.select(fs, 'activity', 'officer_id', 'Officer', team, value=my_officer, required=True, empty='Select…') }}
+        {{ m.select(fs, 'activity', 'activity_type', 'Activity type', opts(C.ACTIVITY_TYPES), required=True, empty='Select…') }}
+        {{ m.input(fs, 'activity', 'activity_time', 'Date & time', type='datetime-local', required=True, attrs='data-default-now') }}
+        {{ m.input(fs, 'activity', 'location', 'Location', placeholder='Where it happened') }}
+        {{ m.textarea(fs, 'activity', 'description', 'Description', required=True, rows=3, cls='full', placeholder='What was done…') }}
+        {{ m.input(fs, 'activity', 'outcome', 'Outcome', cls='full', placeholder='Result / lead obtained (optional)') }}
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Log activity</button></div>
+  </form>
+</dialog>
+
+{# ---------- witness ---------- #}
+<dialog class="modal wide" id="m-witness">
+  <form method="post" action="{{ url_for('complaints.add_witness', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip green">{{ m.icon('message') }}</span>
+      <div><h2>Record witness statement</h2><p>An accused person of this case cannot be a witness (trigger <code>trg_witness_bi</code>).</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'witness') }}
+      <div class="form-grid">
+        {{ m.person_picker(fs, 'witness', 'witness_mode', 'witness_person_id', 'w_', 'Witness') }}
+        {{ m.textarea(fs, 'witness', 'statement', 'Statement', required=True, rows=4, cls='full', placeholder='Statement in the witness\'s own words…') }}
+        {{ m.input(fs, 'witness', 'statement_date', 'Recorded at', type='datetime-local', required=True, attrs='data-default-now') }}
+        {{ m.select(fs, 'witness', 'recorded_by', 'Recorded by', officer_opts(officers), value=my_officer, required=True, empty='Select…') }}
+        <div class="full">{{ m.checkbox(fs, 'witness', 'is_protected', 'Protected witness (identity to be kept confidential)') }}</div>
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Save statement</button></div>
+  </form>
+</dialog>
+
+{# ---------- accused ---------- #}
+<dialog class="modal wide" id="m-accused">
+  <form method="post" action="{{ url_for('complaints.add_accused', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip red">{{ m.icon('lock') }}</span>
+      <div><h2>Add accused</h2><p>The complainant or a witness of this case cannot be added as accused.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'accused') }}
+      <div class="form-grid">
+        {{ m.person_picker(fs, 'accused', 'accused_mode', 'accused_person_id', 'a_', 'Accused person') }}
+        {{ m.select(fs, 'accused', 'accused_status', 'Status', opts(C.ACCUSED_STATUSES), value='SUSPECT', required=True) }}
+        {{ m.input(fs, 'accused', 'accused_remarks', 'Remarks', placeholder='Optional') }}
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Add accused</button></div>
+  </form>
+</dialog>
+
+{# ---------- charge ---------- #}
+<dialog class="modal" id="m-charge">
+  <form method="post" action="{{ url_for('complaints.add_charge', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip red">{{ m.icon('scale') }}</span>
+      <div><h2>Frame charge</h2><p>Composite foreign key ensures the person is an accused of this case.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">
+      {{ m.form_errors(fs, 'charge') }}
+      {% set acc = [] %}{% for a in accused %}{% set _ = acc.append((a.person_id, a.full_name)) %}{% endfor %}
+      <div class="form-grid">
+        {{ m.select(fs, 'charge', 'accused_person_id', 'Accused', acc, required=True, empty='Select…', cls='full') }}
+        {{ m.select(fs, 'charge', 'act_name', 'Act', seq_opts(C.ACTS), value='BNS', required=True) }}
+        {{ m.input(fs, 'charge', 'section_code', 'Section', required=True, placeholder='e.g. 303(2)') }}
+        {{ m.input(fs, 'charge', 'offence_description', 'Offence', required=True, cls='full', placeholder='e.g. Theft of movable property') }}
+        {{ m.input(fs, 'charge', 'charged_on', 'Charged on', type='date', required=True, attrs='data-default-today data-max-today') }}
+        {{ m.select(fs, 'charge', 'charged_by', 'Charging officer', officer_opts(officers), value=my_officer, required=True, empty='Select…') }}
+      </div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Frame charge</button></div>
+  </form>
+</dialog>
+
+{# ---------- court (add + update) ---------- #}
+{% macro court_fields(fs, form, cr=None) %}
+  <div class="form-grid">
+    {% if not cr %}{{ m.input(fs, form, 'court_case_no', 'Court case number', required=True, placeholder='e.g. RCC-0921-2026') }}{% endif %}
+    {{ m.select(fs, form, 'court_type', 'Court type', opts(C.COURT_TYPES), value=cr.court_type if cr else 'MAGISTRATE', required=True) }}
+    {{ m.input(fs, form, 'court_name', 'Court name', value=cr.court_name if cr, required=True, cls='full', placeholder='e.g. Judicial Magistrate First Class, Shivajinagar') }}
+    {% if not cr %}{{ m.input(fs, form, 'filing_date', 'Filing date', type='date', required=True, attrs='data-default-today data-max-today') }}{% endif %}
+    {{ m.input(fs, form, 'next_hearing_date', 'Next hearing', type='date', value=cr.next_hearing_date if cr) }}
+    {{ m.input(fs, form, 'judge_name', 'Judge', value=cr.judge_name if cr) }}
+    {{ m.select(fs, form, 'case_stage', 'Stage', opts(C.CASE_STAGES), value=cr.case_stage if cr else 'FILED', required=True) }}
+    {{ m.select(fs, form, 'verdict', 'Verdict', opts(C.VERDICTS), value=cr.verdict if cr else 'PENDING', required=True) }}
+  </div>
+{% endmacro %}
+<dialog class="modal" id="m-court">
+  <form method="post" action="{{ url_for('complaints.add_court', complaint_id=c.complaint_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip violet">{{ m.icon('gavel') }}</span>
+      <div><h2>Add court reference</h2><p>Allowed only after the case is charge-sheeted.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">{{ m.form_errors(fs, 'court') }}{{ court_fields(fs, 'court') }}</div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Save</button></div>
+  </form>
+</dialog>
+{% for cr in courts %}
+<dialog class="modal" id="m-court-{{ cr.court_ref_id }}">
+  <form method="post" action="{{ url_for('complaints.update_court', complaint_id=c.complaint_id, court_ref_id=cr.court_ref_id) }}" novalidate>
+    {{ m.csrf() }}
+    <div class="modal-head"><span class="ico-chip violet">{{ m.icon('gavel') }}</span>
+      <div><h2>Update {{ cr.court_case_no }}</h2><p>Record the next hearing, stage or final verdict.</p></div>
+      <button type="button" class="btn btn-ghost btn-sm close" data-close>{{ m.icon('x') }}</button></div>
+    <div class="modal-body">{{ m.form_errors(fs, 'court-' ~ cr.court_ref_id) }}{{ court_fields(fs, 'court-' ~ cr.court_ref_id, cr) }}</div>
+    <div class="modal-foot"><button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Update</button></div>
+  </form>
+</dialog>
+{% endfor %}
+{% endblock %}

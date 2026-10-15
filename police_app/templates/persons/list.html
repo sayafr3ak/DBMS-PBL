@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Persons{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('users', 'icon-sm') }} Civilian register</div>
+    <h1>Persons</h1>
+    <p>Complainants, accused and witnesses — one record per person, linked to cases by role.</p>
+  </div>
+  <div class="page-actions">
+    {% if can('person.manage') %}<a class="btn btn-primary" href="{{ url_for('persons.new') }}">{{ m.icon('user-plus') }} Add person</a>{% endif %}
+  </div>
+</div>
+<div class="chips mb-3">
+  {% for k, v in [('', 'Everyone'), ('COMPLAINANT', 'Complainants'), ('ACCUSED', 'Accused'), ('WITNESS', 'Witnesses')] %}
+  <a class="chip {{ 'active' if role == k }}" href="{{ url_for('persons.index', role=k or None, q=q or None) }}">{{ v }}</a>
+  {% endfor %}
+</div>
+<div class="card">
+  <form class="filters" method="get">
+    <div class="grow">{{ m.icon('search', 'icon-sm') }}
+      <input class="input" type="search" name="q" value="{{ q }}" placeholder="Name, phone, ID proof number or address…"></div>
+    {% if role %}<input type="hidden" name="role" value="{{ role }}">{% endif %}
+    <button class="btn btn-sm btn-primary" type="submit" data-keep>{{ m.icon('search') }} Search</button>
+  </form>
+  {% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Person</th><th>Phone</th><th>ID proof</th><th>Address</th><th class="center">Complainant</th><th class="center">Accused</th><th class="center">Witness</th></tr></thead>
+    <tbody>
+    {% for p in rows %}
+      <tr class="clickable" data-href="{{ url_for('persons.detail', person_id=p.person_id) }}">
+        <td><span class="row">{{ m.avatar(p.full_name, p.person_id, 'sm') }}<span><b>{{ p.full_name }}</b><br><span class="tiny muted">#{{ p.person_id }} · {{ C.GENDERS.get(p.gender) }}{% if p.date_of_birth %} · {{ ((today - p.date_of_birth).days // 365) }} yrs{% endif %}</span></span></span></td>
+        <td class="mono small">{{ p.phone or '—' }}</td>
+        <td class="small">{% if p.id_proof_type %}<span class="badge outline">{{ p.id_proof_type|label }}</span> <span class="mono">••••{{ p.id_proof_no[-4:] }}</span>{% else %}—{% endif %}</td>
+        <td class="small" style="max-width:260px">{{ p.address }}</td>
+        <td class="center">{% if p.as_complainant %}<span class="badge blue">{{ p.as_complainant }}</span>{% endif %}</td>
+        <td class="center">{% if p.as_accused %}<span class="badge red">{{ p.as_accused }}</span>{% endif %}</td>
+        <td class="center">{% if p.as_witness %}<span class="badge green">{{ p.as_witness }}</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {{ m.pager(pg, 'persons.index', request.args) }}
+  {% else %}{{ m.empty('No persons found', 'Try another search term.', 'users') }}{% endif %}
+</div>
+{% endblock %}

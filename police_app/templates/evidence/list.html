@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Evidence{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('box', 'icon-sm') }} Malkhana register</div>
+    <h1>Evidence &amp; chain of custody</h1>
+    <p>Every exhibit with its current custodian and location, derived live from the custody log.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('reports.view', key='custody-audit') }}">{{ m.icon('shield-check') }} Integrity audit</a>
+    {% if can('evidence.create') %}<a class="btn btn-primary" href="{{ url_for('evidence.new') }}">{{ m.icon('plus') }} Register evidence</a>{% endif %}
+  </div>
+</div>
+
+<div class="chips mb-3">
+  <a class="chip {{ 'active' if not filters.status }}" href="{{ url_for('evidence.index') }}">All <span class="n">{{ counts.values()|sum }}</span></a>
+  {% for k, v in C.EVIDENCE_STATUSES.items() %}
+  <a class="chip {{ 'active' if filters.status == k }}" href="{{ url_for('evidence.index', status=k) }}">{{ v }} <span class="n">{{ counts.get(k, 0) }}</span></a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <form class="filters" method="get">
+    <div class="grow">{{ m.icon('search', 'icon-sm') }}
+      <input class="input" type="search" name="q" value="{{ filters.q }}" placeholder="Evidence no., seal no., description, complaint no., holder or location…"></div>
+    <select class="input" name="category" data-autosubmit>
+      <option value="">All categories</option>
+      {% for k, v in C.EVIDENCE_CATEGORIES.items() %}<option value="{{ k }}" {{ 'selected' if filters.category == k }}>{{ v }}</option>{% endfor %}
+    </select>
+    <select class="input" name="holder" data-autosubmit>
+      <option value="">Any custodian</option>
+      {% for o in officers %}<option value="{{ o.officer_id }}" {{ 'selected' if filters.holder == o.officer_id|string }}>{{ o.full_name }}</option>{% endfor %}
+    </select>
+    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+    <button class="btn btn-sm btn-primary" type="submit" data-keep>{{ m.icon('filter') }} Apply</button>
+    <a class="btn btn-sm btn-ghost" href="{{ url_for('evidence.index') }}">Reset</a>
+  </form>
+  {% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Evidence</th><th>Description</th><th>Case</th><th>Status</th><th>Current custodian</th><th>Location</th><th>Since</th><th class="right">Transfers</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr class="clickable" data-href="{{ url_for('evidence.detail', evidence_id=r.evidence_id) }}">
+        <td><a class="idtag" href="{{ url_for('evidence.detail', evidence_id=r.evidence_id) }}">{{ r.evidence_no }}</a></td>
+        <td class="title-cell" style="max-width:300px"><span class="truncate" style="display:block">{{ r.description }}</span>
+          <small>{{ r.category|label }}{% if r.seal_no %} · Seal {{ r.seal_no }}{% endif %}</small></td>
+        <td><a class="idtag" href="{{ url_for('complaints.detail', complaint_id=r.complaint_id, tab='evidence') }}">{{ r.complaint_no }}</a></td>
+        <td>{{ m.ev_badge(r.evidence_status) }}</td>
+        <td><span class="row">{{ m.avatar(r.current_holder, r.holder_id, 'sm') }}<span class="small">{{ r.current_holder }}<br><span class="tiny muted">{{ r.holder_badge }}</span></span></span></td>
+        <td class="small" style="max-width:200px">{{ m.icon('map-pin', 'icon-sm') }} {{ r.current_location }}</td>
+        <td class="small nowrap">{{ r.held_since|d }}<br><span class="tiny muted">{{ r.days_at_location }} days</span></td>
+        <td class="right"><span class="badge outline">{{ m.icon('link', 'icon-sm') }} {{ r.transfer_count }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+  {{ m.pager(pg, 'evidence.index', request.args) }}
+  {% else %}{{ m.empty('No evidence found', 'Try a different search or filter.', 'box') }}{% endif %}
+</div>
+{% endblock %}

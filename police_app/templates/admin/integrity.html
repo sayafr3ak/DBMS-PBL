@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Integrity lab{% endblock %}
+{% block content %}
+{% set passed = results.values()|selectattr('passed')|list|length %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('shield-check', 'icon-sm') }} Live proof</div>
+    <h1>Integrity lab</h1>
+    <p>Each scenario sends deliberately <b>invalid SQL straight to MySQL</b>, bypassing every application check.
+       A passing test means the database itself rejected it. Every scenario runs inside a transaction that is always rolled back,
+       so no data changes.</p>
+  </div>
+  <div class="page-actions">
+    <form method="post">{{ m.csrf() }}<button class="btn btn-primary" type="submit">{{ m.icon('play') }} Run all {{ grouped.values()|map('length')|sum }} tests</button></form>
+  </div>
+</div>
+
+{% if ran_all %}
+<div class="card mb-3"><div class="card-body score">
+  {% set total = results|length %}{% set pct = (passed / total * 100) if total else 0 %}
+  <svg class="ring" viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.915" fill="none" stroke="var(--surface-3)" stroke-width="5"/>
+    <circle cx="21" cy="21" r="15.915" fill="none" stroke="{{ '#12a150' if passed == total else '#e5484d' }}" stroke-width="5"
+            stroke-dasharray="{{ pct }} {{ 100 - pct }}" stroke-dashoffset="25" stroke-linecap="round"/>
+    <text x="21" y="24" text-anchor="middle" style="font:700 9px var(--font);fill:var(--text)">{{ passed }}</text></svg>
+  <div><h2>{{ passed }} / {{ total }} rules enforced by the database</h2>
+    <p class="muted">{{ 'Every invalid operation was rejected. The business rules hold even if someone bypasses the application.' if passed == total else 'Some invalid operations were NOT rejected — check the red results.' }}</p></div>
+</div></div>
+{% endif %}
+
+<div class="stack">
+{% for rule_key, scenarios in grouped.items() %}
+  <div class="card rule-card">
+    <div class="card-head"><h2><span class="badge blue mono">{{ rule_key }}</span> {{ rules[rule_key] }}</h2>
+      <span class="sub">{{ scenarios|length }} scenario{{ 's' if scenarios|length != 1 }}</span></div>
+    {% for sc in scenarios %}
+    {% set res = results.get(sc.key) %}
+    <div class="scenario">
+      <div><div class="t">{{ sc.title }}</div><div class="d">{{ sc.explanation }}</div><div class="mech">enforced by → {{ sc.mechanism }}</div></div>
+      <form method="post">{{ m.csrf() }}<input type="hidden" name="scenario" value="{{ sc.key }}">
+        <button class="btn btn-sm" type="submit">{{ m.icon('play') }} Run</button></form>
+      <pre>{{ sc.statements|join(';\n') }};</pre>
+      {% if res %}
+      <div class="result">
+        <div class="result-box {{ 'pass' if res.passed else 'fail' }}">{{ m.icon('check-circle' if res.passed else 'x-circle') }}
+          <div><b>{{ 'REJECTED by MySQL — rule enforced' if res.passed else 'NOT REJECTED' }}</b>
+            {% if res.code %}<br><code>ERROR {{ res.code }}</code>{% endif %} {{ res.error }}</div></div>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

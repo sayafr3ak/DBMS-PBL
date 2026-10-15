@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ 'Edit ' ~ person.full_name if person else 'Add person' }}{% endblock %}
+{% block content %}
+{% set fs = form_state %}
+{% set p = person %}
+<div class="crumbs"><a href="{{ url_for('persons.index') }}">Persons</a>{{ m.icon('chevron-right', 'icon-sm') }}{{ p.full_name if p else 'New' }}</div>
+<div class="page-head"><div>
+  <div class="eyebrow">{{ m.icon('user', 'icon-sm') }} {{ 'Update record' if p else 'New record' }}</div>
+  <h1>{{ 'Edit ' ~ p.full_name if p else 'Add a person' }}</h1>
+  <p>ID proof numbers are validated by type (Aadhaar 12 digits, PAN ABCDE1234F, …) in the app and by a CHECK constraint.</p>
+</div></div>
+<form method="post" novalidate style="max-width:860px">
+  {{ m.csrf() }}
+  <div class="card">
+    {{ m.form_errors(fs, 'person') }}
+    <div class="form-section">
+      <div class="form-grid">
+        {{ m.input(fs, 'person', 'full_name', 'Full name', value=p.full_name if p, required=True, cls='full') }}
+        {{ m.select(fs, 'person', 'gender', 'Gender', opts(C.GENDERS), value=p.gender if p, required=True, empty='Select…') }}
+        {{ m.input(fs, 'person', 'date_of_birth', 'Date of birth', type='date', value=p.date_of_birth if p, attrs='data-max-today') }}
+        {{ m.input(fs, 'person', 'phone', 'Mobile', type='tel', value=p.phone if p, placeholder='10-digit mobile') }}
+        {{ m.input(fs, 'person', 'email', 'Email', type='email', value=p.email if p) }}
+        {{ m.input(fs, 'person', 'address', 'Address', value=p.address if p, required=True, cls='full') }}
+        {{ m.select(fs, 'person', 'id_proof_type', 'ID proof type', opts(C.ID_TYPES), value=p.id_proof_type if p, empty='None') }}
+        {{ m.input(fs, 'person', 'id_proof_no', 'ID proof number', value=p.id_proof_no if p) }}
+      </div>
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{{ url_for('persons.detail', person_id=p.person_id) if p else url_for('persons.index') }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} {{ 'Save changes' if p else 'Add person' }}</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

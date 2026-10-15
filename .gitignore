@@ -1,0 +1,14 @@
+# local secrets — copy config.example.ini to config.ini and fill in your MySQL password
+config.ini
+
+# runtime / generated
+logs/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# editor / tool settings
+.claude/
+.vscode/
+.idea/

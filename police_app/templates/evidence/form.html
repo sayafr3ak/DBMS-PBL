@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Register evidence{% endblock %}
+{% block content %}
+{% set fs = form_state %}
+<div class="crumbs"><a href="{{ url_for('evidence.index') }}">Evidence</a>{{ m.icon('chevron-right', 'icon-sm') }}Register</div>
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('box', 'icon-sm') }} Seizure memo</div>
+    <h1>Register evidence</h1>
+    <p>Saving creates the item, issues its EVD number and opens the chain of custody — all in one transaction.</p>
+  </div>
+</div>
+<form method="post" novalidate>
+  {{ m.csrf() }}
+  <div class="grid g-main-wide">
+    <div class="card">
+      {{ m.form_errors(fs, 'evidence') }}
+      <div class="form-section">
+        <h3><span class="step">1</span> Item</h3>
+        <p>Link the item to an open complaint and describe it exactly as in the seizure panchnama.</p>
+        {% set copts = [] %}{% for c in complaints %}{% set _ = copts.append((c.complaint_id, c.complaint_no ~ ' — ' ~ c.title)) %}{% endfor %}
+        <div class="form-grid">
+          {{ m.select(fs, 'evidence', 'complaint_id', 'Complaint', copts, value=preselect, required=True, empty='Select an open complaint…', cls='full') }}
+          {{ m.select(fs, 'evidence', 'category', 'Category', opts(C.EVIDENCE_CATEGORIES), required=True, empty='Select…') }}
+          {{ m.select(fs, 'evidence', 'item_condition', 'Condition', opts(C.CONDITIONS), value='INTACT', required=True) }}
+          {{ m.textarea(fs, 'evidence', 'description', 'Description', required=True, rows=3, cls='full', placeholder='Make, model, identifying marks, serial / IMEI numbers…') }}
+          {{ m.input(fs, 'evidence', 'quantity', 'Quantity', type='number', value=1, required=True, attrs='min=1') }}
+          {{ m.input(fs, 'evidence', 'seal_no', 'Seal number', placeholder='e.g. SL-SHV-0010', help='Unique across all evidence') }}
+        </div>
+      </div>
+      <div class="form-section">
+        <h3><span class="step">2</span> Collection</h3>
+        <p>The collecting officer becomes the first custodian (custody step <b>Initial seizure</b>).</p>
+        <div class="form-grid">
+          {{ m.input(fs, 'evidence', 'collected_at', 'Collected at', type='datetime-local', required=True, attrs='data-default-now') }}
+          {{ m.select(fs, 'evidence', 'collected_by', 'Collecting officer', officer_opts(officers), value=g.user.officer_id, required=True, empty='Select…') }}
+          {{ m.input(fs, 'evidence', 'collected_from', 'Collected from', required=True, cls='full', placeholder='Place / person the item was seized from') }}
+        </div>
+      </div>
+      <div class="form-section">
+        <h3><span class="step">3</span> Deposit in malkhana <span class="badge slate">optional</span></h3>
+        <p>Hand the item to the evidence custodian right away — recorded as the second custody step.</p>
+        {{ m.checkbox(fs, 'evidence', 'deposit_now', 'Deposit with a custodian now', attrs='data-toggles=deposit-box') }}
+        <div id="deposit-box" class="form-grid mt-2">
+          {{ m.select(fs, 'evidence', 'custodian_id', 'Custodian', officer_opts(officers), required=True, empty='Select…') }}
+          {{ m.input(fs, 'evidence', 'deposit_at', 'Deposit time', type='datetime-local', required=True, attrs='data-default-now') }}
+          {{ m.input(fs, 'evidence', 'storage_location', 'Storage location', required=True, cls='full', placeholder='e.g. Malkhana, Shivajinagar PS — rack 4') }}
+        </div>
+      </div>
+      <div class="form-actions">
+        <a class="btn btn-ghost" href="{{ url_for('evidence.index') }}">Cancel</a>
+        <button class="btn btn-primary" type="submit">{{ m.icon('check') }} Register evidence</button>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><h3>{{ m.icon('link') }} How the chain starts</h3></div>
+        <div class="card-body">
+          <div class="chain">
+            <div class="chain-node seizure"><div class="rail"><div class="ring">1</div><div class="link-line"></div></div>
+              <div class="chain-card"><div class="who">Initial seizure</div><div class="small muted">Collecting officer holds the item from the collection time.</div></div></div>
+            <div class="chain-node current"><div class="rail"><div class="ring">2</div></div>
+              <div class="chain-card"><div class="who">Storage</div><div class="small muted">Optional deposit. Previous period closes exactly when this one opens — no gaps, no overlaps.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="alert info">{{ m.icon('info') }}<div>Evidence cannot be added to a closed case, or be collected before the incident occurred — the trigger <code>trg_evidence_bi</code> rejects it.</div></div>
+    </div>
+  </div>
+</form>
+{% endblock %}

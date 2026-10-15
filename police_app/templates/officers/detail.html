@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ o.full_name }}{% endblock %}
+{% block content %}
+<div class="crumbs"><a href="{{ url_for('officers.index') }}">Officers</a>{{ m.icon('chevron-right', 'icon-sm') }}{{ o.full_name }}</div>
+<div class="page-head">
+  <div class="row">{{ m.avatar(o.full_name, o.officer_id, 'lg') }}
+    <div><h1>{{ o.full_name }} {% if not o.is_active %}<span class="badge red">Inactive</span>{% endif %}</h1>
+      <p>{{ o.officer_rank }} · <span class="mono">{{ o.badge_no }}</span> · {{ o.station_name }}</p></div></div>
+  <div class="page-actions">
+    {% if can('officer.manage') %}
+    <a class="btn" href="{{ url_for('officers.edit', officer_id=o.officer_id) }}">{{ m.icon('edit') }} Edit</a>
+    <form method="post" action="{{ url_for('officers.toggle', officer_id=o.officer_id) }}" data-confirm="{{ 'Deactivate' if o.is_active else 'Reactivate' }} {{ o.full_name }}?">
+      {{ m.csrf() }}<button class="btn {{ 'btn-danger' if o.is_active else 'btn-primary' }}" type="submit">{{ m.icon('lock' if o.is_active else 'check') }} {{ 'Deactivate' if o.is_active else 'Reactivate' }}</button></form>
+    <form method="post" action="{{ url_for('officers.delete', officer_id=o.officer_id) }}" data-confirm="Permanently delete this officer record? Only possible if they never handled any case.">
+      {{ m.csrf() }}<button class="btn btn-ghost" type="submit" title="Delete">{{ m.icon('trash') }}</button></form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid g-4 mb-3">
+  <div class="card kpi blue"><div class="kpi-icon">{{ m.icon('folder') }}</div><div class="kpi-label">Active cases</div><div class="kpi-value">{{ o.active_cases }}</div><div class="kpi-foot">{{ o.lead_cases }} as lead IO</div></div>
+  <div class="card kpi violet"><div class="kpi-icon">{{ m.icon('layers') }}</div><div class="kpi-label">Cases handled</div><div class="kpi-value">{{ o.total_cases_handled }}</div><div class="kpi-foot">All time</div></div>
+  <div class="card kpi amber"><div class="kpi-icon">{{ m.icon('activity') }}</div><div class="kpi-label">Activities (30 days)</div><div class="kpi-value">{{ o.activities_30d }}</div><div class="kpi-foot">Diary entries logged</div></div>
+  <div class="card kpi green"><div class="kpi-icon">{{ m.icon('box') }}</div><div class="kpi-label">Evidence in custody</div><div class="kpi-value">{{ o.evidence_in_hand }}</div><div class="kpi-foot">Items currently held</div></div>
+</div>
+
+<div class="grid g-main">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>{{ m.icon('folder') }} Assignments</h2></div>
+      {% if cases %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Complaint</th><th>Title</th><th>Role</th><th>Status</th><th>Assigned</th><th>Relieved</th></tr></thead>
+        <tbody>{% for c in cases %}
+          <tr class="clickable" data-href="{{ url_for('complaints.detail', complaint_id=c.complaint_id) }}">
+            <td><a class="idtag" href="{{ url_for('complaints.detail', complaint_id=c.complaint_id) }}">{{ c.complaint_no }}</a></td>
+            <td class="title-cell" style="max-width:260px"><span class="truncate" style="display:block">{{ c.title }}</span></td>
+            <td><span class="badge {{ 'blue' if c.assignment_role == 'LEAD' else 'slate' }}">{{ c.assignment_role|label }}</span></td>
+            <td>{{ m.status_badge(c.status) }}</td><td class="small">{{ c.assigned_at|d }}</td>
+            <td class="small">{% if c.relieved_at %}{{ c.relieved_at|d }}{% else %}<span class="badge green">Active</span>{% endif %}</td></tr>
+        {% endfor %}</tbody></table></div>
+      {% else %}{{ m.empty('No assignments', 'This officer has not been assigned to any case.', 'folder') }}{% endif %}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>{{ m.icon('box') }} Evidence currently held</h2></div>
+      {% if evidence %}
+      <div class="list">{% for e in evidence %}
+        <a class="list-item" href="{{ url_for('evidence.detail', evidence_id=e.evidence_id) }}">
+          <span class="ico-chip violet">{{ m.icon('box', 'icon-sm') }}</span>
+          <div class="grow"><div class="t truncate">{{ e.evidence_no }} · {{ e.description }}</div><div class="s">{{ e.current_location }} · {{ e.days_at_location }} days</div></div>
+          {{ m.ev_badge(e.evidence_status) }}</a>
+      {% endfor %}</div>
+      {% else %}<div class="card-body muted small">No evidence in this officer's custody.</div>{% endif %}
+    </div>
+  </div>
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h3>{{ m.icon('user') }} Profile</h3></div>
+      <div class="card-body"><dl class="dl">
+        <dt>Badge</dt><dd class="mono">{{ o.badge_no }}</dd><dt>Rank</dt><dd>{{ o.officer_rank }}</dd>
+        <dt>Station</dt><dd>{{ o.station_name }}</dd><dt>Mobile</dt><dd class="mono">{{ o.phone }}</dd>
+        <dt>Email</dt><dd>{{ o.email or '—' }}</dd><dt>Joined</dt><dd>{{ o.date_joined|d }}</dd></dl></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>{{ m.icon('activity') }} Recent activity</h3></div>
+      <div class="card-body">
+        {% for a in activities %}
+        <div class="person-row" style="align-items:flex-start"><span class="ico-chip amber">{{ m.icon('activity', 'icon-sm') }}</span>
+          <div><div class="name">{{ a.activity_type|label }} · <a href="{{ url_for('complaints.detail', complaint_id=a.complaint_id, tab='activities') }}">{{ a.complaint_no }}</a></div>
+            <div class="info">{{ a.activity_time|dt }}</div><div class="small">{{ a.description|truncate(90) }}</div></div></div>
+        {% else %}<p class="muted small">No activities logged.</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

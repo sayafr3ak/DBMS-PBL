@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Officers{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('shield', 'icon-sm') }} Personnel</div>
+    <h1>Officers &amp; stations</h1>
+    <p>Workload of every officer, computed live by the <code>v_officer_load</code> view.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('reports.view', key='officer-load') }}">{{ m.icon('chart') }} Workload report</a>
+    {% if can('officer.manage') %}<a class="btn btn-primary" href="{{ url_for('officers.new') }}">{{ m.icon('plus') }} Add officer</a>{% endif %}
+  </div>
+</div>
+
+<div class="grid g-4 mb-3">
+  {% for s in station_stats %}
+  <a class="card kpi {{ ['blue', 'violet', 'cyan', 'amber'][loop.index0 % 4] }}" href="{{ url_for('officers.index', station=s.station_id) }}">
+    <div class="row between"><div class="kpi-icon">{{ m.icon('building') }}</div><span class="badge outline mono">{{ s.station_code }}</span></div>
+    <div class="kpi-label">{{ s.station_name }}</div>
+    <div class="kpi-value">{{ s.open_cases or 0 }} <span class="small muted" style="font-weight:500">open / {{ s.total }}</span></div>
+    <div class="kpi-foot">{{ s.officers }} active officers · {{ s.district }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <form class="filters" method="get">
+    <div class="grow">{{ m.icon('search', 'icon-sm') }}<input class="input" type="search" name="q" value="{{ q }}" placeholder="Name, badge or rank…"></div>
+    <select class="input" name="station" data-autosubmit><option value="">All stations</option>
+      {% for s in stations %}<option value="{{ s.station_id }}" {{ 'selected' if station == s.station_id|string }}>{{ s.station_name }}</option>{% endfor %}</select>
+    <select class="input" name="active" data-autosubmit>
+      <option value="1" {{ 'selected' if active == '1' }}>Active</option><option value="0" {{ 'selected' if active == '0' }}>Inactive</option>
+      <option value="" {{ 'selected' if active == '' }}>All</option></select>
+    <button class="btn btn-sm btn-primary" type="submit" data-keep>{{ m.icon('filter') }} Apply</button>
+  </form>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Officer</th><th>Rank</th><th>Station</th><th>Workload</th><th class="center">Lead</th><th class="center">Activities 30d</th><th class="center">Evidence held</th><th>Login</th></tr></thead>
+    <tbody>
+    {% for o in rows %}
+    <tr class="clickable" data-href="{{ url_for('officers.detail', officer_id=o.officer_id) }}">
+      <td><span class="row">{{ m.avatar(o.full_name, o.officer_id, 'sm') }}<span><b>{{ o.full_name }}</b><br><span class="tiny muted mono">{{ o.badge_no }}</span></span></span></td>
+      <td class="small">{{ o.officer_rank }}</td>
+      <td class="small">{{ o.station_name }}</td>
+      <td><span class="row"><span class="meter {{ 'hot' if o.active_cases >= 3 }}">{% for i in range(5) %}<i class="{{ 'on' if i < o.active_cases }}"></i>{% endfor %}</span><b>{{ o.active_cases }}</b></span></td>
+      <td class="center">{{ o.lead_cases }}</td>
+      <td class="center">{{ o.activities_30d }}</td>
+      <td class="center">{{ o.evidence_in_hand }}</td>
+      <td class="small">{% if not o.is_active %}<span class="badge red">Inactive</span>{% elif o.username %}<span class="badge slate">{{ o.username }} · {{ o.user_role }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+    </tr>
+    {% else %}<tr><td colspan="8">{{ m.empty('No officers', 'Nothing matches the filters.', 'shield') }}</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+{% endblock %}

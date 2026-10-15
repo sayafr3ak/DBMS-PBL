@@ -1,0 +1,1514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Report — Police Complaint & Evidence Tracking System</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font: 10.5pt/1.55 "Segoe UI", Calibri, Arial, sans-serif; color: #15192b; margin: 0; background: #fff; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  h1 { font-size: 20pt; color: #1b2a6b; margin: 0 0 10px; padding-top: 6px; border-bottom: 3px solid #3d5afe; padding-bottom: 6px; page-break-before: always; }
+  h1.first { page-break-before: auto; }
+  h2 { font-size: 13.5pt; color: #24307a; margin: 22px 0 8px; }
+  h3 { font-size: 11.5pt; color: #24307a; margin: 16px 0 6px; }
+  p { margin: 6px 0 8px; text-align: justify; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 9.2pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid #c9cfe0; padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: #eef1fb; color: #1b2a6b; font-weight: 650; }
+  code, .mono { font-family: Consolas, "Cascadia Code", monospace; font-size: 8.8pt; }
+  pre { background: #f5f7fc; border: 1px solid #d8deef; border-radius: 6px; padding: 10px 12px; font: 8.6pt/1.45 Consolas, monospace;
+        white-space: pre-wrap; page-break-inside: avoid; }
+  .pass { color: #0c7a3c; font-weight: 700; } .fail { color: #c52a2f; font-weight: 700; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 8.4pt; font-weight: 650; }
+  .t-pk { background: #fff1d6; color: #8a4b00; } .t-uq { background: #efe6ff; color: #5b21b6; }
+  .t-fk { background: #e3ecff; color: #1d3fbf; } .t-ck { background: #def5e6; color: #0f6b36; }
+  .cover { height: 260mm; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .cover .badge { width: 90px; height: 90px; margin: 0 auto 26px; border-radius: 24px; display: grid; place-items: center;
+                  background: linear-gradient(135deg, #4c6ef5, #1b2a9c); color: #fff; font: 800 30pt "Segoe UI"; }
+  .cover h2 { font-size: 12pt; color: #5b6480; text-transform: uppercase; letter-spacing: .14em; margin: 0; }
+  .cover .title { font-size: 25pt; font-weight: 800; color: #1b2a6b; line-height: 1.2; margin: 14px 0 10px; }
+  .cover .sub { font-size: 12pt; color: #3d4560; }
+  .cover table { width: 70%; margin: 36px auto 0; font-size: 10.5pt; }
+  .toc { columns: 2; font-size: 10pt; }
+  .toc div { break-inside: avoid; padding: 2px 0; }
+  .shot { page-break-inside: avoid; margin: 10px 0 18px; }
+  .shot img { width: 100%; border: 1px solid #c9cfe0; border-radius: 6px; }
+  .shot .cap { font-size: 9pt; color: #4b5470; text-align: center; margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .note { background: #eef3ff; border-left: 4px solid #3d5afe; padding: 8px 12px; margin: 10px 0; font-size: 9.6pt; }
+  .er img { width: 100%; border: 1px solid #c9cfe0; }
+  ul { margin: 4px 0 10px 18px; padding: 0; } li { margin: 2px 0; }
+  .rel { font-family: Consolas, monospace; font-size: 9pt; margin: 3px 0; }
+  .rel u { text-decoration: underline; font-weight: 700; } .rel i { color: #1d3fbf; font-style: normal; }
+  @media screen { body { background: #e9ecf2; } .wrap { background: #fff; padding: 30px 46px; margin: 20px auto; box-shadow: 0 10px 40px rgba(0,0,0,.1); } }
+</style>
+</head>
+<body><div class="wrap">
+
+<!-- ======================= COVER ======================= -->
+<section class="cover">
+  <div class="badge">P</div>
+  <h2>Database Management Systems · Project 59</h2>
+  <div class="title">Design and Implementation of a Database Management System for<br>Police Complaint and Evidence Tracking</div>
+  <div class="sub">PCETS — Police Complaint &amp; Evidence Tracking System</div>
+  <table>
+    <tr><th>Database</th><td>MySQL 8.0 (InnoDB) — schema in 3NF</td></tr>
+    <tr><th>Application</th><td>Python 3 · Flask web application</td></tr>
+    <tr><th>Deliverables</th><td>Review 1, Review 2 and Review 3</td></tr>
+    <tr><th>Report generated</th><td>16 October 2026</td></tr>
+  </table>
+</section>
+
+<h1 class="first">Contents</h1>
+<div class="toc">
+  
+  <div>1. Introduction</div>
+  <div>2. Users and roles</div>
+  <div>3. Requirements</div>
+  <div>4. Conceptual design (ER model)</div>
+  <div>5. Relational schema</div>
+  <div>6. Functional dependencies and normalization</div>
+  <div>7. Data dictionary</div>
+  <div>8. Integrity constraints and business rules</div>
+  <div>9. Triggers, procedures and functions</div>
+  <div>10. Views and SQL queries</div>
+  <div>11. Indexing strategy</div>
+  <div>12. Transactions and concurrency</div>
+  <div>13. Application design</div>
+  <div>14. Testing</div>
+  <div>15. Output screens</div>
+  <div>16. Conclusion and future scope</div>
+  <div>Appendix A. Installation and running</div>
+  <div>Appendix B. Project structure</div>
+  <div>Appendix C. Sample data</div>
+</div>
+
+<!-- ======================= 1 ======================= -->
+<h1>1. Introduction</h1>
+<h2>1.1 Problem identification</h2>
+<p>Police stations record complaints (FIRs), investigation diaries, seized evidence, court dates and custody hand-overs in
+separate paper registers. Such unstructured registers make it hard to answer basic questions — <i>Which cases are pending
+and with whom? Where is exhibit X right now? Who held it on a given date?</i> — and, most importantly, they weaken the
+<b>chain of custody</b>: a missing or overlapping hand-over entry can make evidence inadmissible in court.</p>
+<h2>1.2 Scope</h2>
+<p>PCETS is a relational database and web application for one police district (several stations). It covers complaint
+registration, officer assignment, the investigation diary, evidence registration and custody transfers, witnesses,
+accused persons, charges, court references, case status workflow with a full audit trail, search and reporting. Court
+case management beyond references/hearing dates, payroll and FIR filing with external systems (CCTNS) are out of scope.</p>
+<h2>1.3 Objectives</h2>
+<ul>
+  <li>Design a normalized (3NF) relational schema for complaints, persons, officers, assignments, activities, evidence,
+      custody logs, witnesses, charges, court references and status histories.</li>
+  <li>Enforce the business rules <b>inside the database</b> — unique complaint/evidence IDs, complete custody transfer, valid
+      case status, no overlapping custody and mandatory closure details — using keys, CHECK constraints and triggers.</li>
+  <li>Provide views and reports: pending cases, officer load, evidence location, custody history, witnesses, case timeline and closures.</li>
+  <li>Build a secure, validated, transaction-aware application with role-based access for station staff.</li>
+  <li>Demonstrate correctness through systematic automated testing.</li>
+</ul>
+
+<!-- ======================= 2 ======================= -->
+<h1>2. Users and roles</h1>
+<table>
+  <tr><th>Role</th><th>Typical user</th><th>Main permissions</th></tr>
+  <tr><td><b>ADMIN</b></td><td>District system administrator</td><td>Everything, including officer management and the Integrity Lab</td></tr>
+  <tr><td><b>SHO</b></td><td>Station House Officer (Inspector)</td><td>Register &amp; edit complaints, assign/relieve officers, change status, <b>close</b> cases, all case actions, reports</td></tr>
+  <tr><td><b>IO</b></td><td>Investigating Officer (Sub-Inspector)</td><td>Register complaints, log activities, evidence, custody transfers, witnesses, accused, charges, court references, status updates (not closure)</td></tr>
+  <tr><td><b>CUSTODIAN</b></td><td>Malkhana in-charge (Head Constable)</td><td>Register evidence and transfer custody; read-only access to cases and reports</td></tr>
+</table>
+<p>Civilian <b>persons</b> (complainants, accused, witnesses) are data subjects, not system users. There is no login page: the
+application opens as the default user (<code>default_user</code> in <code>config.ini</code>, normally <code>admin</code>) and the
+<b>Acting as</b> selector in the sidebar switches to any station user. Permissions for the acting role are enforced on the server
+for every request (HTTP 403 otherwise), the UI hides actions the role cannot perform, and the acting officer is recorded in the audit trail.</p>
+
+<!-- ======================= 3 ======================= -->
+<h1>3. Requirements</h1>
+<h2>3.1 Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Implemented in</th></tr>
+  
+  <tr><td>FR-01</td><td>Register a complaint with an existing or new complainant; issue a unique complaint number</td><td>Register complaint page; trigger trg_complaint_bi</td></tr>
+  <tr><td>FR-02</td><td>Assign / relieve officers with roles (LEAD, SUPPORT, FORENSIC, SURVEILLANCE); one active lead per case</td><td>Case → Officers tab</td></tr>
+  <tr><td>FR-03</td><td>Log investigation activities (site visit, raid, arrest, statement …) by assigned officers</td><td>Case → Investigation diary</td></tr>
+  <tr><td>FR-04</td><td>Register evidence with seal number; start chain of custody automatically</td><td>Evidence → Register</td></tr>
+  <tr><td>FR-05</td><td>Transfer custody between officers with purpose, location, time and seal check</td><td>Evidence → Transfer custody</td></tr>
+  <tr><td>FR-06</td><td>Record witnesses (with protected-witness flag) and accused persons</td><td>Case → Accused &amp; witnesses</td></tr>
+  <tr><td>FR-07</td><td>Frame charges (act + section) against accused; add court references and hearings</td><td>Case → Charges &amp; court</td></tr>
+  <tr><td>FR-08</td><td>Update case status through a valid workflow; closure requires details; re-open allowed</td><td>Update status dialog; trg_complaint_bu</td></tr>
+  <tr><td>FR-09</td><td>Maintain a tamper-proof status history and full case timeline</td><td>status_history, v_case_timeline</td></tr>
+  <tr><td>FR-10</td><td>Search complaints, evidence, persons and officers; filter lists</td><td>Global search, list filters</td></tr>
+  <tr><td>FR-11</td><td>Reports: pending cases, officer load, evidence location, custody history, witnesses, case timeline, closures (+ analytics)</td><td>Reports module, CSV export, print</td></tr>
+  <tr><td>FR-12</td><td>CRUD for persons and officers with referential protection</td><td>Persons, Officers modules</td></tr>
+  <tr><td>FR-13</td><td>Role-based access with an acting-user selector (no login page)</td><td>auth.py, PERMISSIONS map</td></tr>
+</table>
+<h2>3.2 Non-functional requirements</h2>
+<ul>
+  <li><b>Integrity:</b> every business rule is enforced by MySQL so it holds even if the application is bypassed.</li>
+  <li><b>Atomicity:</b> multi-step operations (registration, custody transfer, closure, lead replacement) run as single transactions.</li>
+  <li><b>Security:</b> role-based access for the acting user, CSRF tokens, parameterised SQL only.</li>
+  <li><b>Auditability:</b> custody log is append-only, status history cannot be edited or deleted, complaints cannot be deleted.</li>
+  <li><b>Performance:</b> indexes on all frequently searched/joined columns; views pre-join common report data.</li>
+  <li><b>Usability:</b> responsive UI (desktop and mobile), light/dark theme, field-level error messages, printable case file and custody sheet.</li>
+</ul>
+
+<!-- ======================= 4 ======================= -->
+<h1>4. Conceptual design (ER model)</h1>
+<div class="er"><img src="er_diagram.png" alt="ER diagram"></div>
+<p class="note">Crow's-foot ER diagram generated from <code>docs/er_diagram.mmd</code>. PK = primary key, FK = foreign key, UK = unique key.</p>
+<h2>4.1 Entities</h2>
+<table>
+  <tr><th>Entity</th><th>Description</th></tr>
+  
+  <tr><td class="mono"><b>STATION</b></td><td>Police station / unit that registers complaints and employs officers</td></tr>
+  <tr><td class="mono"><b>OFFICER</b></td><td>Police personnel with badge, rank and station; may have an app user account</td></tr>
+  <tr><td class="mono"><b>PERSON</b></td><td>Any civilian — the same person can be complainant, accused or witness in different cases</td></tr>
+  <tr><td class="mono"><b>COMPLAINT</b></td><td>The case (FIR) — strong entity at the centre of the model, with status and closure details</td></tr>
+  <tr><td class="mono"><b>COMPLAINT_ACCUSED</b></td><td>Associative entity: persons accused in a complaint, with arrest/bail status</td></tr>
+  <tr><td class="mono"><b>ASSIGNMENT</b></td><td>Associative entity with history: which officer works on which case, role and period</td></tr>
+  <tr><td class="mono"><b>INVESTIGATION_ACTIVITY</b></td><td>Diary entry of an action taken in a case</td></tr>
+  <tr><td class="mono"><b>EVIDENCE_ITEM</b></td><td>Seized / collected exhibit belonging to a complaint</td></tr>
+  <tr><td class="mono"><b>CUSTODY_LOG</b></td><td>One custody period of an evidence item: who held it, where, why, from when to when</td></tr>
+  <tr><td class="mono"><b>WITNESS</b></td><td>Statement of a person in a complaint</td></tr>
+  <tr><td class="mono"><b>CHARGE</b></td><td>Legal section framed against an accused of a complaint</td></tr>
+  <tr><td class="mono"><b>COURT_REFERENCE</b></td><td>Court case linked to a complaint with hearing date and verdict</td></tr>
+  <tr><td class="mono"><b>STATUS_HISTORY</b></td><td>Audit trail of every status change of a complaint</td></tr>
+  <tr><td class="mono"><b>APP_USER</b></td><td>Application user and role (selected via Acting as)</td></tr>
+</table>
+<h2>4.2 Relationships and cardinalities</h2>
+<table>
+  <tr><th>Relationship</th><th>Cardinality</th><th>Notes</th></tr>
+  
+  <tr><td>Station employs Officer</td><td>1 : N</td><td>every officer belongs to exactly one station</td></tr>
+  <tr><td>Station registers Complaint</td><td>1 : N</td><td></td></tr>
+  <tr><td>Person files Complaint</td><td>1 : N</td><td>complainant</td></tr>
+  <tr><td>Complaint — Person (accused)</td><td>M : N</td><td>resolved by COMPLAINT_ACCUSED</td></tr>
+  <tr><td>Complaint — Officer (assignment)</td><td>M : N</td><td>resolved by ASSIGNMENT, keeps history</td></tr>
+  <tr><td>Complaint has Activities</td><td>1 : N</td><td>performed by one officer each</td></tr>
+  <tr><td>Complaint holds Evidence</td><td>1 : N</td><td>collected by one officer</td></tr>
+  <tr><td>Evidence has Custody periods</td><td>1 : N (≥1)</td><td>total participation — every item has an initial seizure</td></tr>
+  <tr><td>Complaint — Person (witness)</td><td>M : N</td><td>resolved by WITNESS</td></tr>
+  <tr><td>Complaint_Accused is charged with Charge</td><td>1 : N</td><td>composite FK (complaint_id, person_id)</td></tr>
+  <tr><td>Complaint is tried in Court reference</td><td>1 : N</td><td></td></tr>
+  <tr><td>Complaint has Status history</td><td>1 : N (≥1)</td><td>first row written on registration</td></tr>
+  <tr><td>Officer logs in as App user</td><td>1 : 0..1</td><td>ADMIN may have no officer</td></tr>
+</table>
+
+<!-- ======================= 5 ======================= -->
+<h1>5. Relational schema</h1>
+<p>Primary keys are <u>underlined</u>, foreign keys are shown in blue as <i>column → table</i>.</p>
+
+<div class="rel">STATION(<u>station_id</u>, station_code UK, station_name, district, address, phone)</div>
+<div class="rel">OFFICER(<u>officer_id</u>, badge_no UK, full_name, officer_rank, <i>station_id → STATION</i>, phone UK, email UK, date_joined, is_active)</div>
+<div class="rel">PERSON(<u>person_id</u>, full_name, gender, date_of_birth, phone, email, address, id_proof_type, id_proof_no, created_at)   UK(id_proof_type, id_proof_no)</div>
+<div class="rel">COMPLAINT(<u>complaint_id</u>, complaint_no UK, <i>station_id → STATION</i>, <i>complainant_id → PERSON</i>, title, description, category, priority, incident_datetime, incident_location, registered_at, <i>registered_by → OFFICER</i>, status, closure_date, closure_type, closure_remarks, <i>closed_by → OFFICER</i>)</div>
+<div class="rel">COMPLAINT_ACCUSED(<u><i>complaint_id → COMPLAINT</i>, <i>person_id → PERSON</i></u>, accused_status, added_at, remarks)</div>
+<div class="rel">ASSIGNMENT(<u>assignment_id</u>, <i>complaint_id → COMPLAINT</i>, <i>officer_id → OFFICER</i>, assignment_role, assigned_at, relieved_at, <i>assigned_by → OFFICER</i>, remarks)</div>
+<div class="rel">INVESTIGATION_ACTIVITY(<u>activity_id</u>, <i>complaint_id → COMPLAINT</i>, <i>officer_id → OFFICER</i>, activity_type, activity_time, location, description, outcome, logged_at)</div>
+<div class="rel">EVIDENCE_ITEM(<u>evidence_id</u>, evidence_no UK, <i>complaint_id → COMPLAINT</i>, category, description, quantity, item_condition, seal_no UK, collected_at, <i>collected_by → OFFICER</i>, collected_from, registered_at)</div>
+<div class="rel">CUSTODY_LOG(<u>custody_id</u>, <i>evidence_id → EVIDENCE_ITEM</i>, <i>from_officer_id → OFFICER</i>, <i>to_officer_id → OFFICER</i>, location, purpose, received_at, released_at, seal_intact, remarks)</div>
+<div class="rel">WITNESS(<u>witness_id</u>, <i>complaint_id → COMPLAINT</i>, <i>person_id → PERSON</i>, statement, statement_date, <i>recorded_by → OFFICER</i>, is_protected)   UK(complaint_id, person_id)</div>
+<div class="rel">CHARGE(<u>charge_id</u>, <i>(complaint_id, accused_person_id) → COMPLAINT_ACCUSED</i>, act_name, section_code, offence_description, charged_on, <i>charged_by → OFFICER</i>)</div>
+<div class="rel">COURT_REFERENCE(<u>court_ref_id</u>, <i>complaint_id → COMPLAINT</i>, court_case_no UK, court_name, court_type, filing_date, next_hearing_date, judge_name, case_stage, verdict)</div>
+<div class="rel">STATUS_HISTORY(<u>history_id</u>, <i>complaint_id → COMPLAINT</i>, old_status, new_status, <i>changed_by → OFFICER</i>, changed_at, remarks)</div>
+<div class="rel">APP_USER(<u>user_id</u>, username UK, password_hash, user_role, <i>officer_id → OFFICER</i> UK, is_active, last_login, created_at)</div>
+<p class="note">Surrogate integer keys are used everywhere for stable joins; the human-readable identifiers
+(<code>complaint_no</code>, <code>evidence_no</code>, <code>badge_no</code>, <code>court_case_no</code>) are candidate keys protected by UNIQUE constraints.</p>
+
+<!-- ======================= 6 ======================= -->
+<h1>6. Functional dependencies and normalization</h1>
+<h2>6.1 Functional dependencies</h2>
+<table>
+  <tr><th>Relation</th><th>Functional dependencies (non-trivial)</th></tr>
+  <tr><td>STATION</td><td>station_id → station_code, station_name, district, address, phone; station_code → station_id</td></tr>
+  <tr><td>OFFICER</td><td>officer_id → badge_no, full_name, officer_rank, station_id, phone, email, date_joined, is_active; badge_no → officer_id; phone → officer_id</td></tr>
+  <tr><td>PERSON</td><td>person_id → all attributes; (id_proof_type, id_proof_no) → person_id</td></tr>
+  <tr><td>COMPLAINT</td><td>complaint_id → complaint_no, station_id, complainant_id, title, description, category, priority, incident_datetime, incident_location, registered_at, registered_by, status, closure_*; complaint_no → complaint_id</td></tr>
+  <tr><td>COMPLAINT_ACCUSED</td><td>(complaint_id, person_id) → accused_status, added_at, remarks</td></tr>
+  <tr><td>ASSIGNMENT</td><td>assignment_id → complaint_id, officer_id, assignment_role, assigned_at, relieved_at, assigned_by, remarks</td></tr>
+  <tr><td>INVESTIGATION_ACTIVITY</td><td>activity_id → complaint_id, officer_id, activity_type, activity_time, location, description, outcome, logged_at</td></tr>
+  <tr><td>EVIDENCE_ITEM</td><td>evidence_id → evidence_no, complaint_id, category, description, quantity, item_condition, seal_no, collected_*; evidence_no → evidence_id; seal_no → evidence_id</td></tr>
+  <tr><td>CUSTODY_LOG</td><td>custody_id → evidence_id, from_officer_id, to_officer_id, location, purpose, received_at, released_at, seal_intact, remarks; (evidence_id, received_at) → custody_id (guaranteed by the no-overlap rule)</td></tr>
+  <tr><td>WITNESS</td><td>witness_id → complaint_id, person_id, statement, statement_date, recorded_by, is_protected; (complaint_id, person_id) → witness_id</td></tr>
+  <tr><td>CHARGE</td><td>charge_id → complaint_id, accused_person_id, act_name, section_code, offence_description, charged_on, charged_by; (complaint_id, accused_person_id, act_name, section_code) → charge_id</td></tr>
+  <tr><td>COURT_REFERENCE</td><td>court_ref_id → all; court_case_no → court_ref_id</td></tr>
+  <tr><td>STATUS_HISTORY</td><td>history_id → complaint_id, old_status, new_status, changed_by, changed_at, remarks</td></tr>
+  <tr><td>APP_USER</td><td>user_id → all; username → user_id; officer_id → user_id</td></tr>
+</table>
+<h2>6.2 Normal forms</h2>
+<ul>
+  <li><b>1NF</b> — every attribute is atomic: there are no repeating groups (multiple accused, witnesses, charges, custody
+      steps and status changes are stored as rows in their own tables, never as lists in a column).</li>
+  <li><b>2NF</b> — the only composite primary key is COMPLAINT_ACCUSED(complaint_id, person_id); its non-key attributes
+      (accused_status, added_at, remarks) describe the <i>pair</i>, not either part alone, so there is no partial dependency.
+      All other tables have single-column keys.</li>
+  <li><b>3NF</b> — in every relation each determinant of a non-trivial FD is a (candidate) key, so there are no transitive dependencies
+      (the schema is in fact in <b>BCNF</b>).</li>
+</ul>
+<h2>6.3 Normalization decisions</h2>
+<table>
+  <tr><th>Un-normalized design (register style)</th><th>Problem</th><th>Decision</th></tr>
+  <tr><td>evidence_item(current_holder, current_location, evidence_status)</td><td>Transitive dependency on the latest custody row; update anomaly — moving an item means updating two places</td><td>Holder, location and status are <b>derived</b> from the open CUSTODY_LOG row in view <code>v_evidence_location</code></td></tr>
+  <tr><td>complaint(officer_name, officer_rank, officer_station)</td><td>officer_id → name, rank (transitive), and only one officer per case</td><td>ASSIGNMENT table (M:N with history); officer details stored once in OFFICER</td></tr>
+  <tr><td>complaint(complainant_name, phone, address …)</td><td>Same person repeated in many cases, inconsistent updates</td><td>Single PERSON table referenced by complaint, accused and witness</td></tr>
+  <tr><td>complaint(accused1, accused2, sections …)</td><td>Repeating groups (violates 1NF)</td><td>COMPLAINT_ACCUSED and CHARGE tables</td></tr>
+  <tr><td>charge(complaint_id, person_id) with separate FKs</td><td>Allowed charging someone who is not an accused of that case</td><td>Composite FK to COMPLAINT_ACCUSED — the relationship itself is referenced</td></tr>
+  <tr><td>complaint(status) only</td><td>History of status changes lost</td><td>STATUS_HISTORY written by trigger</td></tr>
+</table>
+
+<!-- ======================= 7 ======================= -->
+<h1>7. Data dictionary</h1>
+<p>Generated from <code>information_schema</code> of database <code>police_evidence_db</code>. Key: PRI = primary key, UNI = unique, MUL = indexed/foreign key; NN = NOT NULL.</p>
+
+<h3>1. app_user <span style="font-weight:400;color:#6b7590">— 11 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">user_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">username</td><td class="mono">varchar(30)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">password_hash</td><td class="mono">varchar(255)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">user_role</td><td class="mono">varchar(10)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">officer_id</td><td class="mono">int</td><td>YES</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">is_active</td><td class="mono">tinyint(1)</td><td>NN</td>
+      <td></td>
+      <td class="mono">1</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">last_login</td><td class="mono">datetime</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">created_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+</table>
+
+<h3>2. assignment <span style="font-weight:400;color:#6b7590">— 27 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">assignment_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">officer_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">assignment_role</td><td class="mono">varchar(15)</td><td>NN</td>
+      <td></td>
+      <td class="mono">SUPPORT</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">assigned_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+  <tr><td class="mono">relieved_at</td><td class="mono">datetime</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">assigned_by</td><td class="mono">int</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">remarks</td><td class="mono">varchar(300)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">active_key</td><td class="mono">tinyint</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono">STORED GENERATED</td></tr>
+  
+  <tr><td class="mono">lead_key</td><td class="mono">tinyint</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono">STORED GENERATED</td></tr>
+  
+</table>
+
+<h3>3. charge <span style="font-weight:400;color:#6b7590">— 10 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">charge_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">accused_person_id</td><td class="mono">int</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">act_name</td><td class="mono">varchar(15)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">section_code</td><td class="mono">varchar(20)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">offence_description</td><td class="mono">varchar(255)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">charged_on</td><td class="mono">date</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">charged_by</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>4. complaint <span style="font-weight:400;color:#6b7590">— 20 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_no</td><td class="mono">varchar(20)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">station_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">complainant_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">title</td><td class="mono">varchar(150)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">description</td><td class="mono">text</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">category</td><td class="mono">varchar(30)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">priority</td><td class="mono">varchar(10)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono">MEDIUM</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">incident_datetime</td><td class="mono">datetime</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">incident_location</td><td class="mono">varchar(255)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">registered_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+  <tr><td class="mono">registered_by</td><td class="mono">int</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">status</td><td class="mono">varchar(25)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono">REGISTERED</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">closure_date</td><td class="mono">date</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">closure_type</td><td class="mono">varchar(30)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">closure_remarks</td><td class="mono">varchar(500)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">closed_by</td><td class="mono">int</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>5. complaint_accused <span style="font-weight:400;color:#6b7590">— 10 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">person_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">accused_status</td><td class="mono">varchar(15)</td><td>NN</td>
+      <td></td>
+      <td class="mono">SUSPECT</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">added_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+  <tr><td class="mono">remarks</td><td class="mono">varchar(300)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>6. court_reference <span style="font-weight:400;color:#6b7590">— 3 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">court_ref_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">court_case_no</td><td class="mono">varchar(30)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">court_name</td><td class="mono">varchar(150)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">court_type</td><td class="mono">varchar(15)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">filing_date</td><td class="mono">date</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">next_hearing_date</td><td class="mono">date</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">judge_name</td><td class="mono">varchar(100)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">case_stage</td><td class="mono">varchar(20)</td><td>NN</td>
+      <td></td>
+      <td class="mono">FILED</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">verdict</td><td class="mono">varchar(12)</td><td>NN</td>
+      <td></td>
+      <td class="mono">PENDING</td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>7. custody_log <span style="font-weight:400;color:#6b7590">— 56 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">custody_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">evidence_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">from_officer_id</td><td class="mono">int</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">to_officer_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">location</td><td class="mono">varchar(150)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">purpose</td><td class="mono">varchar(20)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">received_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">released_at</td><td class="mono">datetime</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">seal_intact</td><td class="mono">tinyint(1)</td><td>NN</td>
+      <td></td>
+      <td class="mono">1</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">remarks</td><td class="mono">varchar(500)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">open_key</td><td class="mono">tinyint</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono">STORED GENERATED</td></tr>
+  
+</table>
+
+<h3>8. evidence_item <span style="font-weight:400;color:#6b7590">— 22 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">evidence_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">evidence_no</td><td class="mono">varchar(20)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">category</td><td class="mono">varchar(20)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">description</td><td class="mono">varchar(500)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">quantity</td><td class="mono">int</td><td>NN</td>
+      <td></td>
+      <td class="mono">1</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">item_condition</td><td class="mono">varchar(12)</td><td>NN</td>
+      <td></td>
+      <td class="mono">INTACT</td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">seal_no</td><td class="mono">varchar(20)</td><td>YES</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">collected_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">collected_by</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">collected_from</td><td class="mono">varchar(255)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">registered_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+</table>
+
+<h3>9. investigation_activity <span style="font-weight:400;color:#6b7590">— 56 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">activity_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">officer_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">activity_type</td><td class="mono">varchar(25)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">activity_time</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">location</td><td class="mono">varchar(255)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">description</td><td class="mono">varchar(1000)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">outcome</td><td class="mono">varchar(500)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">logged_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+</table>
+
+<h3>10. officer <span style="font-weight:400;color:#6b7590">— 16 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">officer_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">badge_no</td><td class="mono">varchar(12)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">full_name</td><td class="mono">varchar(100)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">officer_rank</td><td class="mono">varchar(30)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">station_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">phone</td><td class="mono">varchar(10)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">email</td><td class="mono">varchar(100)</td><td>YES</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">date_joined</td><td class="mono">date</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">is_active</td><td class="mono">tinyint(1)</td><td>NN</td>
+      <td></td>
+      <td class="mono">1</td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>11. person <span style="font-weight:400;color:#6b7590">— 40 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">person_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">full_name</td><td class="mono">varchar(100)</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">gender</td><td class="mono">char(1)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">date_of_birth</td><td class="mono">date</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">phone</td><td class="mono">varchar(10)</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">email</td><td class="mono">varchar(100)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">address</td><td class="mono">varchar(255)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">id_proof_type</td><td class="mono">varchar(20)</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">id_proof_no</td><td class="mono">varchar(20)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">created_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+</table>
+
+<h3>12. station <span style="font-weight:400;color:#6b7590">— 4 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">station_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">station_code</td><td class="mono">varchar(10)</td><td>NN</td>
+      <td><span class="tag t-uq">UNI</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">station_name</td><td class="mono">varchar(100)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">district</td><td class="mono">varchar(60)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">address</td><td class="mono">varchar(255)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">phone</td><td class="mono">varchar(15)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>13. status_history <span style="font-weight:400;color:#6b7590">— 52 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">history_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">old_status</td><td class="mono">varchar(25)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">new_status</td><td class="mono">varchar(25)</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">changed_by</td><td class="mono">int</td><td>YES</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">changed_at</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono">CURRENT_TIMESTAMP</td><td class="mono">DEFAULT_GENERATED</td></tr>
+  
+  <tr><td class="mono">remarks</td><td class="mono">varchar(500)</td><td>YES</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+</table>
+
+<h3>14. witness <span style="font-weight:400;color:#6b7590">— 11 sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  
+  <tr><td class="mono">witness_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-pk">PK</span></td>
+      <td class="mono"></td><td class="mono">auto_increment</td></tr>
+  
+  <tr><td class="mono">complaint_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">person_id</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">statement</td><td class="mono">text</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">statement_date</td><td class="mono">datetime</td><td>NN</td>
+      <td></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">recorded_by</td><td class="mono">int</td><td>NN</td>
+      <td><span class="tag t-fk">MUL</span></td>
+      <td class="mono"></td><td class="mono"></td></tr>
+  
+  <tr><td class="mono">is_protected</td><td class="mono">tinyint(1)</td><td>NN</td>
+      <td></td>
+      <td class="mono">0</td><td class="mono"></td></tr>
+  
+</table>
+
+
+<!-- ======================= 8 ======================= -->
+<h1>8. Integrity constraints and business rules</h1>
+<h2>8.1 Mandatory business rules</h2>
+<table>
+  <tr><th>Rule</th><th>How it is enforced</th></tr>
+  <tr><td><b>R1 Unique complaint / evidence IDs</b></td><td>UNIQUE <code>uq_complaint_no</code>, <code>uq_evidence_no</code>; numbers generated by triggers <code>trg_complaint_bi</code> / <code>trg_evidence_bi</code> in format CMP-YYYY-NNNNN / EVD-YYYY-NNNNN; CHECK with REGEXP on the format; numbers cannot be changed (trg_complaint_bu)</td></tr>
+  <tr><td><b>R2 Complete custody transfer</b></td><td>NOT NULL on to_officer, location, purpose, received_at; CHECK <code>chk_custody_from</code> (every non-seizure entry names the handing officer); trigger <code>trg_custody_bi</code>: handing officer must be the current holder, previous period must be released, new period must start exactly when the previous ended (no gap); remarks mandatory in the app for broken seal / return / disposal</td></tr>
+  <tr><td><b>R3 Valid case status</b></td><td>CHECK <code>chk_complaint_status</code> (5 values); trigger <code>trg_complaint_bu</code> enforces the workflow (REGISTERED→UNDER_INVESTIGATION→CHARGE_SHEETED→IN_COURT→CLOSED, closure from any open state, re-open from CLOSED) and preconditions (officer assigned, ≥1 charge, court reference)</td></tr>
+  <tr><td><b>R4 No overlapping custody</b></td><td>UNIQUE (evidence_id, open_key) on a generated column — at most one open custody period per item; interval-overlap check in <code>trg_custody_bi</code>; append-only log (<code>trg_custody_bu</code>, <code>trg_custody_bd</code>); final RETURN/DISPOSAL ends the chain</td></tr>
+  <tr><td><b>R5 Closure details required</b></td><td>CHECK <code>chk_complaint_closure</code>: status CLOSED ⇔ closure_date, closure_type, closure_remarks and closed_by are all present; CHECK <code>chk_complaint_closuredate</code>: closure not before registration</td></tr>
+</table>
+<h2>8.2 Additional rules</h2>
+<ul>
+  <li>Only one active LEAD officer per case and no duplicate active assignment (UNIQUE on generated columns <code>lead_key</code>, <code>active_key</code>).</li>
+  <li>Inactive officers cannot be assigned or receive custody; activities only by officers assigned at that time; nothing can be added to a closed case.</li>
+  <li>An accused cannot be a witness (or complainant) in the same case; charges only against accused of that case (composite FK).</li>
+  <li>Court reference only after charge-sheet; verdict only when the court case is DISPOSED (CHECK).</li>
+  <li>ID-proof formats per type (Aadhaar, PAN, Voter ID, Passport, DL), Indian mobile numbers and badge numbers validated by CHECK + REGEXP.</li>
+  <li>Complaints cannot be deleted and the status history cannot be modified (triggers).</li>
+</ul>
+<h2>8.3 Constraint inventory</h2>
+
+<p><b>14</b> PRIMARY KEY, <b>16</b> UNIQUE, <b>26</b> FOREIGN KEY, <b>50</b> CHECK constraints,
+   <b>17</b> triggers. CHECK constraints:</p>
+<table>
+  <tr><th>Table</th><th>Constraint</th><th>Expression</th></tr>
+  
+  <tr><td class="mono">app_user</td><td class="mono">chk_app_officer</td><td class="mono" style="font-size:7.8pt">((user_role = _utf8mb4\&#39;ADMIN\&#39;) or (officer_id is not null))</td></tr>
+  
+  <tr><td class="mono">app_user</td><td class="mono">chk_app_role</td><td class="mono" style="font-size:7.8pt">(user_role in (_utf8mb4\&#39;ADMIN\&#39;,_utf8mb4\&#39;SHO\&#39;,_utf8mb4\&#39;IO\&#39;,_utf8mb4\&#39;CUSTODIAN\&#39;))</td></tr>
+  
+  <tr><td class="mono">app_user</td><td class="mono">chk_app_username</td><td class="mono" style="font-size:7.8pt">regexp_like(username,_utf8mb4\&#39;^[a-z0-9_.]{3,30}$\&#39;)</td></tr>
+  
+  <tr><td class="mono">assignment</td><td class="mono">chk_assignment_dates</td><td class="mono" style="font-size:7.8pt">((relieved_at is null) or (relieved_at &gt;= assigned_at))</td></tr>
+  
+  <tr><td class="mono">assignment</td><td class="mono">chk_assignment_role</td><td class="mono" style="font-size:7.8pt">(assignment_role in (_utf8mb4\&#39;LEAD\&#39;,_utf8mb4\&#39;SUPPORT\&#39;,_utf8mb4\&#39;FORENSIC\&#39;,_utf8mb4\&#39;SURVEILLANCE\&#39;))</td></tr>
+  
+  <tr><td class="mono">charge</td><td class="mono">chk_charge_act</td><td class="mono" style="font-size:7.8pt">(act_name in (_utf8mb4\&#39;BNS\&#39;,_utf8mb4\&#39;BNSS\&#39;,_utf8mb4\&#39;IT Act\&#39;,_utf8mb4\&#39;NDPS Act\&#39;,_utf8mb4\&#39;Arms Act\&#39;,_utf8mb4\&#39;MV Act\&#39;,_utf8mb4\&#39;Other\&#39;))</td></tr>
+  
+  <tr><td class="mono">charge</td><td class="mono">chk_charge_section</td><td class="mono" style="font-size:7.8pt">regexp_like(section_code,_utf8mb4\&#39;^[0-9]+[A-Za-z0-9()]*$\&#39;)</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_category</td><td class="mono" style="font-size:7.8pt">(category in...</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_closure</td><td class="mono" style="font-size:7.8pt">(((status = _utf8mb4\&#39;CLOSED\&#39;) and (closure_date is not null) and (closure_type is not null) and (closure_remarks is not null) and (closed_by is not null)) or ((status &lt;&gt; _utf8mb4\&#39;CLOSED\&#39;) and (closure_date is null) and (closure_type is null) and...</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_closuredate</td><td class="mono" style="font-size:7.8pt">((closure_date is null) or (closure_date &gt;= cast(registered_at as date)))</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_closuretype</td><td class="mono" style="font-size:7.8pt">((closure_type is null) or (closure_type in (_utf8mb4\&#39;SOLVED\&#39;,_utf8mb4\&#39;CONVICTED\&#39;,_utf8mb4\&#39;ACQUITTED\&#39;,_utf8mb4\&#39;FALSE_COMPLAINT\&#39;,_utf8mb4\&#39;INSUFFICIENT_EVIDENCE\&#39;,_utf8mb4\&#39;COMPROMISE\&#39;,_utf8mb4\&#39;UNTRACED\&#39;,_utf8mb4\&#39;TRANSFERRED\&#39;)))</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_incident</td><td class="mono" style="font-size:7.8pt">(incident_datetime &lt;= registered_at)</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_no</td><td class="mono" style="font-size:7.8pt">regexp_like(complaint_no,_utf8mb4\&#39;^CMP-[0-9]{4}-[0-9]{5}$\&#39;)</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_priority</td><td class="mono" style="font-size:7.8pt">(priority in (_utf8mb4\&#39;LOW\&#39;,_utf8mb4\&#39;MEDIUM\&#39;,_utf8mb4\&#39;HIGH\&#39;,_utf8mb4\&#39;CRITICAL\&#39;))</td></tr>
+  
+  <tr><td class="mono">complaint</td><td class="mono">chk_complaint_status</td><td class="mono" style="font-size:7.8pt">(status in (_utf8mb4\&#39;REGISTERED\&#39;,_utf8mb4\&#39;UNDER_INVESTIGATION\&#39;,_utf8mb4\&#39;CHARGE_SHEETED\&#39;,_utf8mb4\&#39;IN_COURT\&#39;,_utf8mb4\&#39;CLOSED\&#39;))</td></tr>
+  
+  <tr><td class="mono">complaint_accused</td><td class="mono">chk_accused_status</td><td class="mono" style="font-size:7.8pt">(accused_status in (_utf8mb4\&#39;SUSPECT\&#39;,_utf8mb4\&#39;ARRESTED\&#39;,_utf8mb4\&#39;ABSCONDING\&#39;,_utf8mb4\&#39;ON_BAIL\&#39;,_utf8mb4\&#39;RELEASED\&#39;))</td></tr>
+  
+  <tr><td class="mono">court_reference</td><td class="mono">chk_court_hearing</td><td class="mono" style="font-size:7.8pt">((next_hearing_date is null) or (next_hearing_date &gt;= filing_date))</td></tr>
+  
+  <tr><td class="mono">court_reference</td><td class="mono">chk_court_stage</td><td class="mono" style="font-size:7.8pt">(case_stage in (_utf8mb4\&#39;FILED\&#39;,_utf8mb4\&#39;HEARING\&#39;,_utf8mb4\&#39;ARGUMENTS\&#39;,_utf8mb4\&#39;JUDGMENT_RESERVED\&#39;,_utf8mb4\&#39;DISPOSED\&#39;))</td></tr>
+  
+  <tr><td class="mono">court_reference</td><td class="mono">chk_court_type</td><td class="mono" style="font-size:7.8pt">(court_type in (_utf8mb4\&#39;MAGISTRATE\&#39;,_utf8mb4\&#39;SESSIONS\&#39;,_utf8mb4\&#39;HIGH_COURT\&#39;,_utf8mb4\&#39;SPECIAL\&#39;))</td></tr>
+  
+  <tr><td class="mono">court_reference</td><td class="mono">chk_court_verdict</td><td class="mono" style="font-size:7.8pt">(verdict in (_utf8mb4\&#39;PENDING\&#39;,_utf8mb4\&#39;CONVICTED\&#39;,_utf8mb4\&#39;ACQUITTED\&#39;,_utf8mb4\&#39;DISMISSED\&#39;,_utf8mb4\&#39;SETTLED\&#39;))</td></tr>
+  
+  <tr><td class="mono">court_reference</td><td class="mono">chk_court_verdict_stage</td><td class="mono" style="font-size:7.8pt">((verdict = _utf8mb4\&#39;PENDING\&#39;) = (case_stage &lt;&gt; _utf8mb4\&#39;DISPOSED\&#39;))</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td class="mono">chk_custody_from</td><td class="mono" style="font-size:7.8pt">((purpose = _utf8mb4\&#39;INITIAL_SEIZURE\&#39;) = (from_officer_id is null))</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td class="mono">chk_custody_location</td><td class="mono" style="font-size:7.8pt">(char_length(trim(location)) &gt;= 3)</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td class="mono">chk_custody_period</td><td class="mono" style="font-size:7.8pt">((released_at is null) or (released_at &gt; received_at))</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td class="mono">chk_custody_purpose</td><td class="mono" style="font-size:7.8pt">(purpose in (_utf8mb4\&#39;INITIAL_SEIZURE\&#39;,_utf8mb4\&#39;STORAGE\&#39;,_utf8mb4\&#39;FORENSIC_ANALYSIS\&#39;,_utf8mb4\&#39;INVESTIGATION\&#39;,_utf8mb4\&#39;COURT_PRODUCTION\&#39;,_utf8mb4\&#39;RETURN_TO_OWNER\&#39;,_utf8mb4\&#39;DISPOSAL\&#39;))</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td class="mono">chk_custody_seal</td><td class="mono" style="font-size:7.8pt">(seal_intact in (0,1))</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td class="mono">chk_custody_self</td><td class="mono" style="font-size:7.8pt">((from_officer_id is null) or (from_officer_id &lt;&gt; to_officer_id))</td></tr>
+  
+  <tr><td class="mono">evidence_item</td><td class="mono">chk_evidence_category</td><td class="mono" style="font-size:7.8pt">(category in (_utf8mb4\&#39;WEAPON\&#39;,_utf8mb4\&#39;DOCUMENT\&#39;,_utf8mb4\&#39;ELECTRONIC\&#39;,_utf8mb4\&#39;BIOLOGICAL\&#39;,_utf8mb4\&#39;NARCOTIC\&#39;,_utf8mb4\&#39;VEHICLE\&#39;,_utf8mb4\&#39;CCTV_FOOTAGE\&#39;,_utf8mb4\&#39;FINGERPRINT\&#39;,_utf8mb4\&#39;CLOTHING\&#39;,_utf8mb4\&#39;CASH_VALUABLES\&#39;,_utf8mb4\&#39;OTHER\&#39;))</td></tr>
+  
+  <tr><td class="mono">evidence_item</td><td class="mono">chk_evidence_condition</td><td class="mono" style="font-size:7.8pt">(item_condition in (_utf8mb4\&#39;INTACT\&#39;,_utf8mb4\&#39;DAMAGED\&#39;,_utf8mb4\&#39;PARTIAL\&#39;,_utf8mb4\&#39;PERISHABLE\&#39;))</td></tr>
+  
+  <tr><td class="mono">evidence_item</td><td class="mono">chk_evidence_no</td><td class="mono" style="font-size:7.8pt">regexp_like(evidence_no,_utf8mb4\&#39;^EVD-[0-9]{4}-[0-9]{5}$\&#39;)</td></tr>
+  
+  <tr><td class="mono">evidence_item</td><td class="mono">chk_evidence_qty</td><td class="mono" style="font-size:7.8pt">(quantity &gt; 0)</td></tr>
+  
+  <tr><td class="mono">investigation_activity</td><td class="mono">chk_activity_desc</td><td class="mono" style="font-size:7.8pt">(char_length(trim(description)) &gt;= 5)</td></tr>
+  
+  <tr><td class="mono">investigation_activity</td><td class="mono">chk_activity_type</td><td class="mono" style="font-size:7.8pt">(activity_type in (_utf8mb4\&#39;SITE_VISIT\&#39;,_utf8mb4\&#39;STATEMENT_RECORDED\&#39;,_utf8mb4\&#39;INTERROGATION\&#39;,_utf8mb4\&#39;RAID\&#39;,_utf8mb4\&#39;ARREST\&#39;,_utf8mb4\&#39;EVIDENCE_COLLECTION\&#39;,_utf8mb4\&#39;FORENSIC_REQUEST\&#39;,_utf8mb4\&#39;CCTV_REVIEW\&#39;,_utf8mb4\&#39;MEDICAL_EXAM\&#39;,_utf8mb4\&#39;OTHER\&#39;))</td></tr>
+  
+  <tr><td class="mono">officer</td><td class="mono">chk_officer_active</td><td class="mono" style="font-size:7.8pt">(is_active in (0,1))</td></tr>
+  
+  <tr><td class="mono">officer</td><td class="mono">chk_officer_badge</td><td class="mono" style="font-size:7.8pt">regexp_like(badge_no,_utf8mb4\&#39;^MH[0-9]{2}-[0-9]{4}$\&#39;)</td></tr>
+  
+  <tr><td class="mono">officer</td><td class="mono">chk_officer_joined</td><td class="mono" style="font-size:7.8pt">(date_joined &gt;= _utf8mb4\&#39;1970-01-01\&#39;)</td></tr>
+  
+  <tr><td class="mono">officer</td><td class="mono">chk_officer_phone</td><td class="mono" style="font-size:7.8pt">regexp_like(phone,_utf8mb4\&#39;^[6-9][0-9]{9}$\&#39;)</td></tr>
+  
+  <tr><td class="mono">officer</td><td class="mono">chk_officer_rank</td><td class="mono" style="font-size:7.8pt">(officer_rank in (_utf8mb4\&#39;Constable\&#39;,_utf8mb4\&#39;Head Constable\&#39;,_utf8mb4\&#39;Assistant Sub-Inspector\&#39;,_utf8mb4\&#39;Sub-Inspector\&#39;,_utf8mb4\&#39;Inspector\&#39;,_utf8mb4\&#39;Deputy SP\&#39;,_utf8mb4\&#39;Superintendent\&#39;))</td></tr>
+  
+  <tr><td class="mono">person</td><td class="mono">chk_person_dob</td><td class="mono" style="font-size:7.8pt">((date_of_birth is null) or (date_of_birth &gt;= _utf8mb4\&#39;1900-01-01\&#39;))</td></tr>
+  
+  <tr><td class="mono">person</td><td class="mono">chk_person_gender</td><td class="mono" style="font-size:7.8pt">(gender in (_utf8mb4\&#39;M\&#39;,_utf8mb4\&#39;F\&#39;,_utf8mb4\&#39;O\&#39;))</td></tr>
+  
+  <tr><td class="mono">person</td><td class="mono">chk_person_idformat</td><td class="mono" style="font-size:7.8pt">((id_proof_type is null) or ((id_proof_type = _utf8mb4\&#39;AADHAAR\&#39;) and regexp_like(id_proof_no,_utf8mb4\&#39;^[2-9][0-9]{11}$\&#39;)) or ((id_proof_type = _utf8mb4\&#39;PAN\&#39;) and regexp_like(id_proof_no,_utf8mb4\&#39;^[A-Z]{5}[0-9]{4}[A-Z]$\&#39;)) or ((id_proof_type =...</td></tr>
+  
+  <tr><td class="mono">person</td><td class="mono">chk_person_idpair</td><td class="mono" style="font-size:7.8pt">((id_proof_type is null) = (id_proof_no is null))</td></tr>
+  
+  <tr><td class="mono">person</td><td class="mono">chk_person_idtype</td><td class="mono" style="font-size:7.8pt">((id_proof_type is null) or (id_proof_type in (_utf8mb4\&#39;AADHAAR\&#39;,_utf8mb4\&#39;PAN\&#39;,_utf8mb4\&#39;VOTER_ID\&#39;,_utf8mb4\&#39;PASSPORT\&#39;,_utf8mb4\&#39;DRIVING_LICENSE\&#39;)))</td></tr>
+  
+  <tr><td class="mono">person</td><td class="mono">chk_person_phone</td><td class="mono" style="font-size:7.8pt">((phone is null) or regexp_like(phone,_utf8mb4\&#39;^[6-9][0-9]{9}$\&#39;))</td></tr>
+  
+  <tr><td class="mono">station</td><td class="mono">chk_station_code</td><td class="mono" style="font-size:7.8pt">regexp_like(station_code,_utf8mb4\&#39;^PS-[A-Z]{3}$\&#39;)</td></tr>
+  
+  <tr><td class="mono">status_history</td><td class="mono">chk_history_change</td><td class="mono" style="font-size:7.8pt">((old_status is null) or (old_status &lt;&gt; new_status))</td></tr>
+  
+  <tr><td class="mono">status_history</td><td class="mono">chk_history_new</td><td class="mono" style="font-size:7.8pt">(new_status in (_utf8mb4\&#39;REGISTERED\&#39;,_utf8mb4\&#39;UNDER_INVESTIGATION\&#39;,_utf8mb4\&#39;CHARGE_SHEETED\&#39;,_utf8mb4\&#39;IN_COURT\&#39;,_utf8mb4\&#39;CLOSED\&#39;))</td></tr>
+  
+  <tr><td class="mono">status_history</td><td class="mono">chk_history_old</td><td class="mono" style="font-size:7.8pt">((old_status is null) or (old_status in (_utf8mb4\&#39;REGISTERED\&#39;,_utf8mb4\&#39;UNDER_INVESTIGATION\&#39;,_utf8mb4\&#39;CHARGE_SHEETED\&#39;,_utf8mb4\&#39;IN_COURT\&#39;,_utf8mb4\&#39;CLOSED\&#39;)))</td></tr>
+  
+  <tr><td class="mono">witness</td><td class="mono">chk_witness_protected</td><td class="mono" style="font-size:7.8pt">(is_protected in (0,1))</td></tr>
+  
+  <tr><td class="mono">witness</td><td class="mono">chk_witness_statement</td><td class="mono" style="font-size:7.8pt">(char_length(trim(statement)) &gt;= 10)</td></tr>
+  
+</table>
+
+<!-- ======================= 9 ======================= -->
+<h1>9. Triggers, procedures and functions</h1>
+
+<table>
+  <tr><th>Trigger</th><th>Timing</th><th>Table</th><th>Purpose</th></tr>
+  <tr><td class="mono">trg_assignment_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">assignment</td><td>Active officer only, case not closed, not before registration</td></tr><tr><td class="mono">trg_charge_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">charge</td><td>Charges only while under investigation or later</td></tr><tr><td class="mono">trg_complaint_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">complaint</td><td>Generate CMP number, normalise registration time, force initial REGISTERED status</td></tr><tr><td class="mono">trg_complaint_bu</td><td>BEFORE UPDATE</td>
+    <td class="mono">complaint</td><td>Status workflow + preconditions; complaint number immutable; closed case not editable</td></tr><tr><td class="mono">trg_complaint_bd</td><td>BEFORE DELETE</td>
+    <td class="mono">complaint</td><td>Forbid deleting complaints</td></tr><tr><td class="mono">trg_complaint_ai</td><td>AFTER INSERT</td>
+    <td class="mono">complaint</td><td>Write the first status-history row</td></tr><tr><td class="mono">trg_complaint_au</td><td>AFTER UPDATE</td>
+    <td class="mono">complaint</td><td>Audit trail: write status_history on every status change (acting officer from @current_officer_id)</td></tr><tr><td class="mono">trg_accused_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">complaint_accused</td><td>Case open; complainant / witness cannot be accused</td></tr><tr><td class="mono">trg_court_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">court_reference</td><td>Court reference only after charge-sheet</td></tr><tr><td class="mono">trg_custody_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">custody_log</td><td>Complete-transfer, no-gap, no-overlap and final-disposition checks</td></tr><tr><td class="mono">trg_custody_bu</td><td>BEFORE UPDATE</td>
+    <td class="mono">custody_log</td><td>Append-only: only release time can be set, once</td></tr><tr><td class="mono">trg_custody_bd</td><td>BEFORE DELETE</td>
+    <td class="mono">custody_log</td><td>Forbid deleting custody records</td></tr><tr><td class="mono">trg_evidence_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">evidence_item</td><td>Generate EVD number; case open; collected after incident; active collector</td></tr><tr><td class="mono">trg_activity_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">investigation_activity</td><td>Case open, time valid, officer assigned at activity time</td></tr><tr><td class="mono">trg_history_bu</td><td>BEFORE UPDATE</td>
+    <td class="mono">status_history</td><td>Audit log cannot be modified</td></tr><tr><td class="mono">trg_history_bd</td><td>BEFORE DELETE</td>
+    <td class="mono">status_history</td><td>Audit log cannot be deleted</td></tr><tr><td class="mono">trg_witness_bi</td><td>BEFORE INSERT</td>
+    <td class="mono">witness</td><td>Case open; accused cannot be witness</td></tr>
+</table>
+<table>
+  <tr><th>Routine</th><th>Type</th><th>Purpose</th></tr>
+  
+  <tr><td class="mono">fn_case_age_days</td><td>FUNCTION</td><td>Age of a case in days</td></tr><tr><td class="mono">fn_current_holder</td><td>FUNCTION</td><td>Current custodian of an evidence item</td></tr><tr><td class="mono">sp_close_complaint</td><td>PROCEDURE</td><td>Atomic closure: close case and relieve all active officers</td></tr><tr><td class="mono">sp_transfer_custody</td><td>PROCEDURE</td><td>Atomic custody transfer (SELECT … FOR UPDATE, release + insert, ROLLBACK on error)</td></tr>
+</table>
+<pre>-- excerpt: no overlapping custody (trg_custody_bi)
+SELECT COUNT(*) INTO v_overlap FROM custody_log
+ WHERE evidence_id = NEW.evidence_id
+   AND NEW.received_at &lt; COALESCE(released_at, '9999-12-31 23:59:59')
+   AND COALESCE(NEW.released_at, '9999-12-31 23:59:59') &gt; received_at;
+IF v_overlap &gt; 0 THEN
+   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Overlapping custody period for this evidence item.';
+END IF;</pre>
+
+<!-- ======================= 10 ======================= -->
+<h1>10. Views and SQL queries</h1>
+<table>
+  <tr><th>View</th><th>Report</th><th>Techniques</th></tr>
+  
+  <tr><td class="mono">v_pending_cases</td><td>Pending cases</td><td>JOIN, LEFT JOIN, correlated sub-queries, DATEDIFF</td></tr>
+  <tr><td class="mono">v_officer_load</td><td>Officer load</td><td>LEFT JOIN, COUNT(DISTINCT CASE …), GROUP BY, sub-queries</td></tr>
+  <tr><td class="mono">v_evidence_location</td><td>Evidence location</td><td>JOIN on open custody row, derived status via CASE</td></tr>
+  <tr><td class="mono">v_custody_history</td><td>Custody history</td><td>Self-referencing officer joins, ROW_NUMBER() window, TIMESTAMPDIFF</td></tr>
+  <tr><td class="mono">v_case_witnesses</td><td>Witnesses</td><td>Multi-table JOIN</td></tr>
+  <tr><td class="mono">v_case_timeline</td><td>Case timeline</td><td>UNION ALL of 8 event sources</td></tr>
+  <tr><td class="mono">v_closed_cases</td><td>Closures</td><td>JOIN, scalar sub-queries, DATEDIFF</td></tr>
+  <tr><td class="mono">v_case_summary</td><td>Case list (application)</td><td>JOIN + LEFT JOIN + sub-queries</td></tr>
+  <tr><td class="mono">v_upcoming_hearings</td><td>Upcoming hearings</td><td>JOIN, date filter</td></tr>
+</table>
+<p><code>sql/05_report_queries.sql</code> contains 25 demonstration queries: the 7 required reports, multi-table INNER/LEFT
+joins, cross-station custody hand-overs, GROUP BY / HAVING / ROLLUP, conditional aggregation (pivot), nested and correlated
+sub-queries, EXISTS / NOT EXISTS / IN, derived tables, window functions (RANK, ROW_NUMBER, LAG, LEAD), a CTE and a stored function call.</p>
+<pre>-- Q22 Time spent in each status (LEAD window function over the audit trail)
+WITH status_periods AS (
+    SELECT complaint_id, new_status, changed_at,
+           LEAD(changed_at) OVER (PARTITION BY complaint_id ORDER BY changed_at) AS next_change
+      FROM status_history)
+SELECT c.complaint_no, sp.new_status, sp.changed_at,
+       DATEDIFF(COALESCE(sp.next_change, NOW()), sp.changed_at) AS days_in_status
+  FROM status_periods sp JOIN complaint c ON c.complaint_id = sp.complaint_id;
+
+-- Q17 Open cases with no activity in the last 30 days (NOT EXISTS)
+SELECT c.complaint_no, c.title, c.status FROM complaint c
+ WHERE c.status &lt;&gt; 'CLOSED'
+   AND NOT EXISTS (SELECT 1 FROM investigation_activity a
+                    WHERE a.complaint_id = c.complaint_id
+                      AND a.activity_time &gt;= CURDATE() - INTERVAL 30 DAY);</pre>
+
+<!-- ======================= 11 ======================= -->
+<h1>11. Indexing strategy</h1>
+<p>InnoDB automatically indexes primary keys, unique keys and foreign keys. Additional secondary indexes were created for the
+most frequent search, filter, sort and join paths:</p>
+<table>
+  <tr><th>Index</th><th>Columns</th><th>Used by</th></tr>
+  
+  
+  <tr><td class="mono">idx_assignment_officer</td><td class="mono">assignment(officer_id,relieved_at)</td><td>Officer load (active assignments)</td></tr>
+  <tr><td class="mono">ft_complaint_text</td><td class="mono">complaint(title,description)</td><td>Full-text search on title and description</td></tr>
+  <tr><td class="mono">idx_complaint_category</td><td class="mono">complaint(category)</td><td>Category filter, analytics</td></tr>
+  <tr><td class="mono">idx_complaint_incident</td><td class="mono">complaint(incident_datetime)</td><td>Date-range queries</td></tr>
+  <tr><td class="mono">idx_complaint_priority</td><td class="mono">complaint(priority)</td><td>Priority filter / sort</td></tr>
+  <tr><td class="mono">idx_complaint_status_reg</td><td class="mono">complaint(status,registered_at)</td><td>Pending/closed lists sorted by date, dashboard counts</td></tr>
+  <tr><td class="mono">idx_court_next_hearing</td><td class="mono">court_reference(next_hearing_date)</td><td>Upcoming hearings</td></tr>
+  <tr><td class="mono">idx_custody_evidence_time</td><td class="mono">custody_log(evidence_id,received_at)</td><td>Chain of custody ordering, overlap check in trigger</td></tr>
+  <tr><td class="mono">idx_custody_holder</td><td class="mono">custody_log(to_officer_id,released_at)</td><td>Evidence held by an officer</td></tr>
+  <tr><td class="mono">idx_evidence_category</td><td class="mono">evidence_item(category)</td><td>Evidence filter</td></tr>
+  <tr><td class="mono">idx_activity_case_time</td><td class="mono">investigation_activity(complaint_id,activity_time)</td><td>Case diary, last activity, stale cases</td></tr>
+  <tr><td class="mono">idx_officer_name</td><td class="mono">officer(full_name)</td><td>Officer search</td></tr>
+  <tr><td class="mono">idx_person_name</td><td class="mono">person(full_name)</td><td>Person search / picker</td></tr>
+  <tr><td class="mono">idx_person_phone</td><td class="mono">person(phone)</td><td>Search by phone</td></tr>
+  <tr><td class="mono">idx_history_case_time</td><td class="mono">status_history(complaint_id,changed_at)</td><td>Status audit / timeline</td></tr>
+</table>
+
+<!-- ======================= 12 ======================= -->
+<h1>12. Transactions and concurrency</h1>
+<p>The application uses an explicit <code>START TRANSACTION … COMMIT</code> block (<code>db.transaction()</code>, isolation READ COMMITTED);
+any exception triggers <code>ROLLBACK</code>, so a multi-step operation is all-or-nothing:</p>
+<table>
+  <tr><th>Operation</th><th>Statements in one transaction</th></tr>
+  <tr><td>Register complaint</td><td>INSERT person (if new) → INSERT complaint (+ trigger history) → optional INSERT assignment + UPDATE status</td></tr>
+  <tr><td>Register evidence</td><td>INSERT evidence_item → INSERT custody (INITIAL_SEIZURE) → optional release + INSERT custody (STORAGE)</td></tr>
+  <tr><td>Custody transfer</td><td><b>SELECT … FOR UPDATE</b> on the open custody row → UPDATE released_at → INSERT new period</td></tr>
+  <tr><td>Status change</td><td>SELECT status FOR UPDATE (optimistic check) → UPDATE complaint (+ audit trigger) → relieve officers on closure</td></tr>
+  <tr><td>Replace lead / role change</td><td>Lock current lead → relieve → INSERT new assignment</td></tr>
+  <tr><td>Add witness / accused with new person</td><td>INSERT person → INSERT witness / complaint_accused</td></tr>
+</table>
+<p>The row lock taken with <code>FOR UPDATE</code> serialises two custodians trying to transfer the same exhibit at the same moment —
+the second waits, then fails the no-overlap check instead of creating two current holders. Test <b>TC-10</b> proves rollback: a valid new
+person is <i>not</i> saved when the complaint insert fails. Stored procedures <code>sp_transfer_custody</code> and
+<code>sp_close_complaint</code> show the same pattern in pure SQL with an EXIT HANDLER that rolls back.</p>
+
+<!-- ======================= 13 ======================= -->
+<h1>13. Application design</h1>
+<h2>13.1 Architecture</h2>
+<pre>Browser (HTML/CSS/JS)  ──HTTP──▶  Flask routes (blueprints)      complaints, evidence, persons, officers, reports, admin, auth
+                                    │  form validation (validators.py) · RBAC (auth.requires) · CSRF
+                                    ▼
+                                Services (business logic + transactions)
+                                    │  parameterised SQL only
+                                    ▼
+                                db.py  — connection pool, transaction(), error translation
+                                    ▼
+                                MySQL 8: tables · constraints · triggers · views · procedures</pre>
+<h2>13.2 Modules</h2>
+<table>
+  <tr><th>Module</th><th>Features</th></tr>
+  <tr><td>Dashboard</td><td>KPIs, status donut, registrations vs closures chart, officer workload, crime categories, items needing attention, live activity feed</td></tr>
+  <tr><td>Complaints</td><td>Search/filter/sort/paginate; register (existing or new complainant, optional lead); case page with status stepper and tabs: overview, officers, investigation diary, evidence, accused &amp; witnesses, charges &amp; court, timeline, status audit; printable case file</td></tr>
+  <tr><td>Evidence &amp; custody</td><td>Malkhana register with derived status; register evidence (+ deposit); visual chain of custody; atomic transfer dialog; printable custody sheet</td></tr>
+  <tr><td>Persons / Officers</td><td>Full CRUD, involvement across cases, workload profile, activation/deactivation</td></tr>
+  <tr><td>Reports</td><td>12 parameterised reports with charts, quick filter, print and CSV export</td></tr>
+  <tr><td>Integrity lab</td><td>Runs 26 invalid SQL scenarios against MySQL (always rolled back) and shows the database error for each rule</td></tr>
+  <tr><td>Database explorer</td><td>Tables, columns, constraints, relationships, triggers, routines and indexes from information_schema</td></tr>
+</table>
+<h2>13.3 Validation and error handling</h2>
+<ul>
+  <li><b>Two layers:</b> application validation (required fields, lengths, formats, dates not in the future, allowed choices) gives field-level
+      messages; the database re-checks everything as the final authority.</li>
+  <li>MySQL errors are translated into readable messages: 1062 duplicate → which key, 3819 CHECK → rule description, 1451/1452 FK, 1644 trigger
+      SIGNAL text, 1048 NOT NULL. The form is re-displayed with the user's input and the dialog re-opened.</li>
+  <li>Custom 400/403/404/500/503 pages; unexpected errors are logged to <code>logs/app.log</code>; a database-down page explains how to fix the connection.</li>
+</ul>
+<h2>13.4 Security</h2>
+<ul><li>No login page (not required by the brief): the acting user is chosen from the sidebar; session cookies are HttpOnly + SameSite.
+      <code>app_user</code> keeps PBKDF2 password hashes so a login screen can be re-enabled for real deployment.</li>
+  <li>Role-based access checked on every route; CSRF token on every POST form; all SQL parameterised (no string concatenation of user input).</li>
+  <li>ID-proof numbers masked in lists; protected-witness names hidden in the printable case file.</li></ul>
+
+<!-- ======================= 14 ======================= -->
+<h1>14. Testing</h1>
+<h2>14.1 Strategy</h2>
+<ul>
+  <li><b>Automated functional tests</b> (<code>tests/test_app.py</code>, Python unittest): drive the real application through HTTP against a
+      separate database <code>police_evidence_test</code> rebuilt from the SQL scripts on each run.</li>
+  <li><b>Database negative tests</b> (<code>sql/06_constraint_tests.sql</code>): 28 invalid statements, each must fail.</li>
+  <li><b>Integrity Lab</b>: 26 live scenarios proving every rule is enforced by MySQL itself.</li>
+  <li><b>Manual UI tests</b> on desktop and mobile widths, light and dark themes (see output screens).</li>
+</ul>
+<h2>14.2 Automated test results — 43 / 43 passed (4.9 s)</h2>
+<table>
+  <tr><th style="width:7%">ID</th><th style="width:15%">Module</th><th>Scenario</th><th>Expected result</th><th style="width:7%">Result</th></tr>
+  
+  <tr><td>TC-01</td><td>Acting user</td><td>Open the app with a fresh browser</td><td>Dashboard opens directly; no login page</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-02</td><td>Acting user</td><td>Check the default acting user</td><td>Session uses default_user from config.ini (admin)</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-03</td><td>Acting user</td><td>Switch to anjali, then to an unknown user</td><td>Role/name change; unknown user rejected</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-04</td><td>Security (RBAC)</td><td>Custodian opens Register complaint / Add officer</td><td>HTTP 403; evidence registration allowed</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-05</td><td>Security</td><td>POST the user switcher without CSRF token</td><td>HTTP 400 - request rejected</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-06</td><td>Complaint registration</td><td>Register complaint with a NEW complainant</td><td>CMP-YYYY-NNNNN issued, status REGISTERED, person + history row created</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-07</td><td>Complaint registration</td><td>Register complaint and assign lead officer at once</td><td>Status UNDER_INVESTIGATION, LEAD assignment, 2 history rows</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-08</td><td>Input validation</td><td>Empty title, short description, invalid category, future incident time</td><td>HTTP 422 with field errors; nothing inserted</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-09</td><td>Input validation</td><td>Phone &#39;12345&#39;, PAN &#39;1234&#39;</td><td>Field errors for phone and PAN format</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-10</td><td>Transactions</td><td>Valid new person + complaint with non-existent station</td><td>FK error; whole transaction rolled back - person NOT saved</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-11</td><td>Officer assignment</td><td>Assign LEAD and FORENSIC officers</td><td>2 active assignments</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-12</td><td>Officer assignment</td><td>Assign a second LEAD without &#39;replace&#39;</td><td>Rejected: case already has an active LEAD</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-13</td><td>Transactions</td><td>Replace current lead</td><td>Old lead relieved + new lead inserted atomically</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-14</td><td>Officer assignment</td><td>Assign retired (inactive) officer</td><td>Rejected by trigger trg_assignment_bi</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-15</td><td>Status update / activity</td><td>Move to UNDER_INVESTIGATION, log a site visit</td><td>Activity saved; audit row records acting officer &amp; remarks</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-16</td><td>Activity logging</td><td>Officer not on the case logs an activity</td><td>Rejected by trigger trg_activity_bi</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-17</td><td>Input validation</td><td>Activity dated tomorrow</td><td>&#39;cannot be in the future&#39;</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-18</td><td>Evidence registration</td><td>Register evidence and deposit with custodian</td><td>EVD number issued; 2 custody periods with no gap; custodian is holder</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-19</td><td>Evidence registration</td><td>Second item with same seal number</td><td>Rejected: seal number already used (UNIQUE)</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-20</td><td>Custody transfer</td><td>Transfer custodian -&gt; forensic officer</td><td>Previous period closed at transfer time; new period opened; status IN_LAB</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-21</td><td>Custody transfer</td><td>Transfer dated before current custody began</td><td>Rejected; chain unchanged</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-22</td><td>Custody transfer</td><td>Seal not intact and no remarks</td><td>Validation error - remarks mandatory</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-23</td><td>Custody transfer</td><td>Transfer an item already returned to owner</td><td>Rejected - custody chain is final</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-24</td><td>Integrity (DB level)</td><td>Run all 26 Integrity Lab scenarios with raw SQL</td><td>Every invalid statement rejected by MySQL</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-25</td><td>Witness entry</td><td>Record protected witness statement (new person)</td><td>Witness row + person created; protected flag set</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-26</td><td>Accused</td><td>Add an existing witness as accused in same case</td><td>Rejected by trigger trg_accused_bi</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-27</td><td>Charges</td><td>Add accused, frame BNS 303(2) charge</td><td>Charge saved</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-28</td><td>Status update</td><td>Charge-sheet a case with no charges / with charges</td><td>First rejected, second accepted</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-29</td><td>Status update</td><td>CHARGE_SHEETED -&gt; REGISTERED</td><td>Rejected: invalid transition</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-30</td><td>Court reference</td><td>Add court reference, move to IN_COURT</td><td>Both succeed</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-31</td><td>Court reference</td><td>Verdict CONVICTED while stage HEARING</td><td>Validation error</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-32</td><td>Closure</td><td>Close case without closure details</td><td>Validation error; status unchanged</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-33</td><td>Security (RBAC)</td><td>Investigating Officer tries to close case</td><td>HTTP 403</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-34</td><td>Closure / transactions</td><td>Close with all closure details</td><td>CLOSED; all officers relieved in same transaction; appears in closures view</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-35</td><td>Closure</td><td>Log activity on a closed case</td><td>Rejected</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-36</td><td>Status update</td><td>Re-open closed case</td><td>UNDER_INVESTIGATION, closure fields cleared, full audit trail kept</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-37</td><td>CRUD</td><td>Create, update and delete an unreferenced person</td><td>All three succeed; ID proof upper-cased</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-38</td><td>CRUD / FK</td><td>Delete a complainant</td><td>Friendly &#39;referenced by other records&#39; message (FK 1451)</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-39</td><td>CRUD</td><td>Bad badge format, valid officer, deactivate busy officer</td><td>Error, success, refusal</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-40</td><td>Search</td><td>Exact complaint number, name search, filtered list</td><td>Redirect to case; matching results</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-41</td><td>Reports</td><td>Open every report and export CSV</td><td>All 200 OK, CSV mimetype</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-42</td><td>Reports</td><td>Pending cases view vs closed cases</td><td>No overlap</td>
+      <td class="pass">PASS</td></tr>
+  
+  <tr><td>TC-43</td><td>Integrity (DB level)</td><td>LAG() audit over the whole custody log</td><td>0 broken links</td>
+      <td class="pass">PASS</td></tr>
+  
+</table>
+<h2>14.3 Database-level integrity results</h2>
+
+<p><b>26 / 26</b> invalid operations were rejected by MySQL.</p>
+<table>
+  <tr><th>Rule</th><th>Scenario</th><th>Enforced by</th><th>MySQL response</th></tr>
+  
+  <tr><td>R1</td><td>Duplicate complaint number</td><td class="mono" style="font-size:8pt">UNIQUE uq_complaint_no</td>
+      <td class="pass" style="font-weight:500">ERROR 1062: Duplicate entry &#39;CMP-2026-00001&#39; for key &#39;complaint.uq_complaint_no&#39;</td></tr>
+  
+  <tr><td>R1</td><td>Duplicate evidence number</td><td class="mono" style="font-size:8pt">UNIQUE uq_evidence_no</td>
+      <td class="pass" style="font-weight:500">ERROR 1062: Duplicate entry &#39;EVD-2026-00001&#39; for key &#39;evidence_item.uq_evidence_no&#39;</td></tr>
+  
+  <tr><td>R1</td><td>Malformed complaint number</td><td class="mono" style="font-size:8pt">CHECK chk_complaint_no (REGEXP)</td>
+      <td class="pass" style="font-weight:500">ERROR 3819: Check constraint &#39;chk_complaint_no&#39; is violated.</td></tr>
+  
+  <tr><td>R2</td><td>Transfer without handing officer</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bi + CHECK chk_custody_from</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Incomplete custody transfer: the handing officer is not the current custodian.</td></tr>
+  
+  <tr><td>R2</td><td>Handing officer is not the current custodian</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bi</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Incomplete custody transfer: the handing officer is not the current custodian.</td></tr>
+  
+  <tr><td>R2</td><td>New custody while current holder has not released</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bi</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Incomplete custody transfer: the current custodian has not released the item.</td></tr>
+  
+  <tr><td>R2</td><td>Transfer after evidence returned to owner</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bi</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Evidence has already been returned/disposed - the custody chain is final.</td></tr>
+  
+  <tr><td>R3</td><td>Unknown status value</td><td class="mono" style="font-size:8pt">Trigger trg_complaint_bu + CHECK chk_complaint_status</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Invalid status change: REGISTERED -&gt; PENDING.</td></tr>
+  
+  <tr><td>R3</td><td>Illegal workflow jump</td><td class="mono" style="font-size:8pt">Trigger trg_complaint_bu</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Invalid status change: REGISTERED -&gt; IN_COURT.</td></tr>
+  
+  <tr><td>R3</td><td>Investigate without an officer</td><td class="mono" style="font-size:8pt">Trigger trg_complaint_bu</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Assign at least one officer before starting the investigation.</td></tr>
+  
+  <tr><td>R3</td><td>Charge-sheet without charges</td><td class="mono" style="font-size:8pt">Trigger trg_complaint_bu</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: A case cannot be charge-sheeted without at least one charge.</td></tr>
+  
+  <tr><td>R4</td><td>Two current custodians</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bi + UNIQUE uq_custody_one_open</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Incomplete custody transfer: the current custodian has not released the item.</td></tr>
+  
+  <tr><td>R4</td><td>Back-dated overlapping period</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bi (interval overlap check)</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Custody gap/overlap: new custody must start exactly when the previous custody ended.</td></tr>
+  
+  <tr><td>R4</td><td>Tamper with a closed custody record</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bu (append-only log)</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Closed custody records are immutable.</td></tr>
+  
+  <tr><td>R4</td><td>Delete chain-of-custody records</td><td class="mono" style="font-size:8pt">Trigger trg_custody_bd</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Chain-of-custody records cannot be deleted.</td></tr>
+  
+  <tr><td>R5</td><td>Close without closure details</td><td class="mono" style="font-size:8pt">CHECK chk_complaint_closure</td>
+      <td class="pass" style="font-weight:500">ERROR 3819: Check constraint &#39;chk_complaint_closure&#39; is violated.</td></tr>
+  
+  <tr><td>R5</td><td>Closure details on an open case</td><td class="mono" style="font-size:8pt">CHECK chk_complaint_closure</td>
+      <td class="pass" style="font-weight:500">ERROR 3819: Check constraint &#39;chk_complaint_closure&#39; is violated.</td></tr>
+  
+  <tr><td>R5</td><td>Closure date before registration</td><td class="mono" style="font-size:8pt">CHECK chk_complaint_closuredate</td>
+      <td class="pass" style="font-weight:500">ERROR 3819: Check constraint &#39;chk_complaint_closuredate&#39; is violated.</td></tr>
+  
+  <tr><td>R6</td><td>Activity by an unassigned officer</td><td class="mono" style="font-size:8pt">Trigger trg_activity_bi</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Only an officer assigned to this case (at that time) can log an activity.</td></tr>
+  
+  <tr><td>R6</td><td>Assign an inactive officer</td><td class="mono" style="font-size:8pt">Trigger trg_assignment_bi</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Inactive officers cannot be assigned to a case.</td></tr>
+  
+  <tr><td>R6</td><td>Two active LEAD officers</td><td class="mono" style="font-size:8pt">UNIQUE uq_assignment_one_lead (generated column)</td>
+      <td class="pass" style="font-weight:500">ERROR 1062: Duplicate entry &#39;5-1&#39; for key &#39;assignment.uq_assignment_one_lead&#39;</td></tr>
+  
+  <tr><td>R6</td><td>Charge a person who is not accused</td><td class="mono" style="font-size:8pt">Composite FOREIGN KEY fk_charge_accused</td>
+      <td class="pass" style="font-weight:500">ERROR 1452: Cannot add or update a child row: a foreign key constraint fails (`police_evidence_db`.`charge`,...</td></tr>
+  
+  <tr><td>R6</td><td>Invalid Aadhaar number</td><td class="mono" style="font-size:8pt">CHECK chk_person_idformat</td>
+      <td class="pass" style="font-weight:500">ERROR 3819: Check constraint &#39;chk_person_idformat&#39; is violated.</td></tr>
+  
+  <tr><td>R6</td><td>Delete a complaint</td><td class="mono" style="font-size:8pt">Trigger trg_complaint_bd</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Complaints are permanent records and cannot be deleted. Close the case instead.</td></tr>
+  
+  <tr><td>R6</td><td>Tamper with the status audit trail</td><td class="mono" style="font-size:8pt">Trigger trg_history_bu</td>
+      <td class="pass" style="font-weight:500">ERROR 1644: Status history is an audit log and cannot be modified.</td></tr>
+  
+  <tr><td>R6</td><td>Delete a person referenced by a complaint</td><td class="mono" style="font-size:8pt">FOREIGN KEY fk_complaint_complainant</td>
+      <td class="pass" style="font-weight:500">ERROR 1451: Cannot delete or update a parent row: a foreign key constraint fails (`police_evidence_db`.`complaint`,...</td></tr>
+  
+</table>
+
+<!-- ======================= 15 ======================= -->
+<h1>15. Output screens</h1>
+
+
+<div class="shot"><img src="screenshots/02_dashboard.png" alt="02_dashboard.png"><div class="cap">Figure 1. Dashboard — KPIs, status donut, trend chart, workload, attention list</div></div>
+
+<div class="shot"><img src="screenshots/03_complaints_list.png" alt="03_complaints_list.png"><div class="cap">Figure 2. Complaint register with search, filters, sorting and pagination</div></div>
+
+<div class="shot"><img src="screenshots/04_register_complaint.png" alt="04_register_complaint.png"><div class="cap">Figure 3. Complaint registration (existing / new complainant, optional lead)</div></div>
+
+<div class="shot"><img src="screenshots/05_case_overview.png" alt="05_case_overview.png"><div class="cap">Figure 4. Case page — status stepper and overview</div></div>
+
+<div class="shot"><img src="screenshots/06_case_officers.png" alt="06_case_officers.png"><div class="cap">Figure 5. Officer assignments with history</div></div>
+
+<div class="shot"><img src="screenshots/07_case_investigation_diary.png" alt="07_case_investigation_diary.png"><div class="cap">Figure 6. Investigation diary (activity log)</div></div>
+
+<div class="shot"><img src="screenshots/08_case_accused_witnesses.png" alt="08_case_accused_witnesses.png"><div class="cap">Figure 7. Accused and witnesses (protected witnesses)</div></div>
+
+<div class="shot"><img src="screenshots/09_case_charges_court.png" alt="09_case_charges_court.png"><div class="cap">Figure 8. Charges and court references</div></div>
+
+<div class="shot"><img src="screenshots/10_case_timeline.png" alt="10_case_timeline.png"><div class="cap">Figure 9. Complete case timeline (v_case_timeline)</div></div>
+
+<div class="shot"><img src="screenshots/11_case_status_audit.png" alt="11_case_status_audit.png"><div class="cap">Figure 10. Status audit trail written by trigger</div></div>
+
+<div class="shot"><img src="screenshots/12_evidence_list.png" alt="12_evidence_list.png"><div class="cap">Figure 11. Malkhana register with derived status</div></div>
+
+<div class="shot"><img src="screenshots/13_register_evidence.png" alt="13_register_evidence.png"><div class="cap">Figure 12. Evidence registration with optional deposit</div></div>
+
+<div class="shot"><img src="screenshots/14_chain_of_custody.png" alt="14_chain_of_custody.png"><div class="cap">Figure 13. Chain of custody — item returned to owner (final)</div></div>
+
+<div class="shot"><img src="screenshots/15_evidence_in_lab.png" alt="15_evidence_in_lab.png"><div class="cap">Figure 14. Evidence currently in the forensic lab</div></div>
+
+<div class="shot"><img src="screenshots/16_persons.png" alt="16_persons.png"><div class="cap">Figure 15. Person register with roles</div></div>
+
+<div class="shot"><img src="screenshots/17_person_involvement.png" alt="17_person_involvement.png"><div class="cap">Figure 16. Person involvement across cases</div></div>
+
+<div class="shot"><img src="screenshots/18_officers.png" alt="18_officers.png"><div class="cap">Figure 17. Officers and station summary</div></div>
+
+<div class="shot"><img src="screenshots/19_officer_profile.png" alt="19_officer_profile.png"><div class="cap">Figure 18. Officer workload profile</div></div>
+
+<div class="shot"><img src="screenshots/20_reports_hub.png" alt="20_reports_hub.png"><div class="cap">Figure 19. Reports hub</div></div>
+
+<div class="shot"><img src="screenshots/21_report_pending_cases.png" alt="21_report_pending_cases.png"><div class="cap">Figure 20. Report — pending cases</div></div>
+
+<div class="shot"><img src="screenshots/22_report_officer_load.png" alt="22_report_officer_load.png"><div class="cap">Figure 21. Report — officer load</div></div>
+
+<div class="shot"><img src="screenshots/23_report_evidence_location.png" alt="23_report_evidence_location.png"><div class="cap">Figure 22. Report — evidence location</div></div>
+
+<div class="shot"><img src="screenshots/24_report_custody_history.png" alt="24_report_custody_history.png"><div class="cap">Figure 23. Report — custody history</div></div>
+
+<div class="shot"><img src="screenshots/25_report_witnesses.png" alt="25_report_witnesses.png"><div class="cap">Figure 24. Report — witnesses</div></div>
+
+<div class="shot"><img src="screenshots/26_report_case_timeline.png" alt="26_report_case_timeline.png"><div class="cap">Figure 25. Report — case timeline</div></div>
+
+<div class="shot"><img src="screenshots/27_report_closures.png" alt="27_report_closures.png"><div class="cap">Figure 26. Report — closures</div></div>
+
+<div class="shot"><img src="screenshots/28_report_custody_audit.png" alt="28_report_custody_audit.png"><div class="cap">Figure 27. Report — chain-of-custody integrity audit (window functions)</div></div>
+
+<div class="shot"><img src="screenshots/29_integrity_lab.png" alt="29_integrity_lab.png"><div class="cap">Figure 28. Integrity lab — every rule rejected by MySQL</div></div>
+
+<div class="shot"><img src="screenshots/30_database_explorer.png" alt="30_database_explorer.png"><div class="cap">Figure 29. Database explorer (information_schema)</div></div>
+
+<div class="shot"><img src="screenshots/31_search.png" alt="31_search.png"><div class="cap">Figure 30. Global search</div></div>
+
+<div class="shot"><img src="screenshots/32_case_file_print.png" alt="32_case_file_print.png"><div class="cap">Figure 31. Printable case file</div></div>
+
+<div class="shot"><img src="screenshots/33_custody_sheet_print.png" alt="33_custody_sheet_print.png"><div class="cap">Figure 32. Printable custody sheet / evidence tag</div></div>
+
+<div class="shot"><img src="screenshots/34_access_denied.png" alt="34_access_denied.png"><div class="cap">Figure 33. Role-based access control — acting as an IO, adding an officer is denied</div></div>
+
+
+<!-- ======================= 16 ======================= -->
+<h1>16. Conclusion and future scope</h1>
+<p>PCETS replaces fragmented station registers with a single normalized database whose rules cannot be bypassed: complaint and
+evidence identifiers are unique, every custody hand-over is complete and gap-free, custody periods never overlap, case status follows
+a valid workflow with a permanent audit trail, and a case cannot be closed without its closure details. The Flask application exposes
+all required operations — complaint registration, officer assignment, activity logging, evidence registration, custody transfer, witness
+entry, status update and reporting — with validation, transactions, role-based security and a modern responsive interface.
+43 automated tests and 26 database-level scenarios verify the behaviour.</p>
+<h2>Future scope</h2>
+<ul><li>Attachments (photos, PDFs of statements) stored with hash values to prove evidence files are unaltered.</li>
+  <li>QR codes on evidence tags scanned at hand-over; SMS/e-mail alerts for hearing dates and long lab stays.</li>
+  <li>Integration with CCTNS and e-Courts APIs; multi-district partitioning; read replicas for analytics.</li></ul>
+
+<!-- ======================= APPENDICES ======================= -->
+<h1>Appendix A. Installation and running</h1>
+<pre>1. Install MySQL 8.0 and Python 3.10+
+2. pip install -r requirements.txt
+3. Edit config.ini  (MySQL host / user / password)
+4. python setup_db.py          # creates police_evidence_db, loads schema, triggers, views and sample data
+5. python run.py               # open http://127.0.0.1:5000
+6. python -m unittest -v tests.test_app     # automated tests (uses a separate test database)
+
+No login: the app opens as admin; switch to vikram (SHO), anjali (IO), suresh (Custodian)… with "Acting as" in the sidebar
+SQL only:     run sql/00 … sql/04 in MySQL Workbench; sql/05 = report queries; sql/06 = negative tests (mysql --force)</pre>
+<h1>Appendix B. Project structure</h1>
+<pre>Police Evidence Tracking/
+├── config.ini · requirements.txt · run.py · setup_db.py · README.md
+├── sql/       00_create_database · 01_schema · 02_triggers_procedures · 03_views · 04_seed_data · 05_report_queries · 06_constraint_tests
+├── police_app/
+│   ├── app.py (factory, filters, error pages) · auth.py (acting user, RBAC, CSRF) · db.py (pool, transactions, error translation)
+│   ├── validators.py · constants.py
+│   ├── services/  complaint · evidence · person · officer · report · dashboard · integrity
+│   ├── routes/    main · complaints · evidence · persons · officers · reports · admin
+│   ├── templates/ (Jinja2)  ·  static/css/app.css  ·  static/js/app.js
+├── tests/test_app.py
+├── tools/  capture_screens.py · build_report.py · report_template.html
+└── docs/   Project_Report.html/.pdf · TEST_CASES.md · er_diagram.mmd/.png · screenshots/</pre>
+<h1>Appendix C. Sample data</h1>
+<table>
+  <tr><th>Table</th><th>Rows</th><th>Table</th><th>Rows</th></tr>
+  
+  
+  <tr><td class="mono">app_user</td><td>11</td>
+      <td class="mono">assignment</td><td>27</td></tr>
+  
+  <tr><td class="mono">charge</td><td>10</td>
+      <td class="mono">complaint</td><td>20</td></tr>
+  
+  <tr><td class="mono">complaint_accused</td><td>10</td>
+      <td class="mono">court_reference</td><td>3</td></tr>
+  
+  <tr><td class="mono">custody_log</td><td>56</td>
+      <td class="mono">evidence_item</td><td>22</td></tr>
+  
+  <tr><td class="mono">investigation_activity</td><td>56</td>
+      <td class="mono">officer</td><td>16</td></tr>
+  
+  <tr><td class="mono">person</td><td>40</td>
+      <td class="mono">station</td><td>4</td></tr>
+  
+  <tr><td class="mono">status_history</td><td>52</td>
+      <td class="mono">witness</td><td>11</td></tr>
+  
+</table>
+<p>The sample data describes 20 realistic 2026 cases across 4 Pune stations (robbery, burglary, cyber fraud, narcotics, missing person,
+domestic violence …) at every stage of the workflow, 22 evidence items with 56 custody periods (including forensic lab visits, court
+production, return to owner and disposal) — all inserted through the triggers, which proves the rules are mutually consistent.</p>
+
+</div></body></html>

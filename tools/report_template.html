@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Project Report — Police Complaint & Evidence Tracking System</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font: 10.5pt/1.55 "Segoe UI", Calibri, Arial, sans-serif; color: #15192b; margin: 0; background: #fff; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  h1 { font-size: 20pt; color: #1b2a6b; margin: 0 0 10px; padding-top: 6px; border-bottom: 3px solid #3d5afe; padding-bottom: 6px; page-break-before: always; }
+  h1.first { page-break-before: auto; }
+  h2 { font-size: 13.5pt; color: #24307a; margin: 22px 0 8px; }
+  h3 { font-size: 11.5pt; color: #24307a; margin: 16px 0 6px; }
+  p { margin: 6px 0 8px; text-align: justify; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 9.2pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th, td { border: 1px solid #c9cfe0; padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: #eef1fb; color: #1b2a6b; font-weight: 650; }
+  code, .mono { font-family: Consolas, "Cascadia Code", monospace; font-size: 8.8pt; }
+  pre { background: #f5f7fc; border: 1px solid #d8deef; border-radius: 6px; padding: 10px 12px; font: 8.6pt/1.45 Consolas, monospace;
+        white-space: pre-wrap; page-break-inside: avoid; }
+  .pass { color: #0c7a3c; font-weight: 700; } .fail { color: #c52a2f; font-weight: 700; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 4px; font-size: 8.4pt; font-weight: 650; }
+  .t-pk { background: #fff1d6; color: #8a4b00; } .t-uq { background: #efe6ff; color: #5b21b6; }
+  .t-fk { background: #e3ecff; color: #1d3fbf; } .t-ck { background: #def5e6; color: #0f6b36; }
+  .cover { height: 260mm; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .cover .badge { width: 90px; height: 90px; margin: 0 auto 26px; border-radius: 24px; display: grid; place-items: center;
+                  background: linear-gradient(135deg, #4c6ef5, #1b2a9c); color: #fff; font: 800 30pt "Segoe UI"; }
+  .cover h2 { font-size: 12pt; color: #5b6480; text-transform: uppercase; letter-spacing: .14em; margin: 0; }
+  .cover .title { font-size: 25pt; font-weight: 800; color: #1b2a6b; line-height: 1.2; margin: 14px 0 10px; }
+  .cover .sub { font-size: 12pt; color: #3d4560; }
+  .cover table { width: 70%; margin: 36px auto 0; font-size: 10.5pt; }
+  .toc { columns: 2; font-size: 10pt; }
+  .toc div { break-inside: avoid; padding: 2px 0; }
+  .shot { page-break-inside: avoid; margin: 10px 0 18px; }
+  .shot img { width: 100%; border: 1px solid #c9cfe0; border-radius: 6px; }
+  .shot .cap { font-size: 9pt; color: #4b5470; text-align: center; margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .note { background: #eef3ff; border-left: 4px solid #3d5afe; padding: 8px 12px; margin: 10px 0; font-size: 9.6pt; }
+  .er img { width: 100%; border: 1px solid #c9cfe0; }
+  ul { margin: 4px 0 10px 18px; padding: 0; } li { margin: 2px 0; }
+  .rel { font-family: Consolas, monospace; font-size: 9pt; margin: 3px 0; }
+  .rel u { text-decoration: underline; font-weight: 700; } .rel i { color: #1d3fbf; font-style: normal; }
+  @media screen { body { background: #e9ecf2; } .wrap { background: #fff; padding: 30px 46px; margin: 20px auto; box-shadow: 0 10px 40px rgba(0,0,0,.1); } }
+</style>
+</head>
+<body><div class="wrap">
+
+<!-- ======================= COVER ======================= -->
+<section class="cover">
+  <div class="badge">P</div>
+  <h2>Database Management Systems · Project 59</h2>
+  <div class="title">Design and Implementation of a Database Management System for<br>Police Complaint and Evidence Tracking</div>
+  <div class="sub">PCETS — Police Complaint &amp; Evidence Tracking System</div>
+  <table>
+    <tr><th>Database</th><td>MySQL 8.0 (InnoDB) — schema in 3NF</td></tr>
+    <tr><th>Application</th><td>Python 3 · Flask web application</td></tr>
+    <tr><th>Deliverables</th><td>Review 1, Review 2 and Review 3</td></tr>
+    <tr><th>Report generated</th><td>{{ generated.strftime('%d %B %Y') }}</td></tr>
+  </table>
+</section>
+
+<h1 class="first">Contents</h1>
+<div class="toc">
+  {% for t in ['1. Introduction', '2. Users and roles', '3. Requirements', '4. Conceptual design (ER model)',
+               '5. Relational schema', '6. Functional dependencies and normalization', '7. Data dictionary',
+               '8. Integrity constraints and business rules', '9. Triggers, procedures and functions',
+               '10. Views and SQL queries', '11. Indexing strategy', '12. Transactions and concurrency',
+               '13. Application design', '14. Testing', '15. Output screens', '16. Conclusion and future scope',
+               'Appendix A. Installation and running', 'Appendix B. Project structure', 'Appendix C. Sample data'] %}
+  <div>{{ t }}</div>{% endfor %}
+</div>
+
+<!-- ======================= 1 ======================= -->
+<h1>1. Introduction</h1>
+<h2>1.1 Problem identification</h2>
+<p>Police stations record complaints (FIRs), investigation diaries, seized evidence, court dates and custody hand-overs in
+separate paper registers. Such unstructured registers make it hard to answer basic questions — <i>Which cases are pending
+and with whom? Where is exhibit X right now? Who held it on a given date?</i> — and, most importantly, they weaken the
+<b>chain of custody</b>: a missing or overlapping hand-over entry can make evidence inadmissible in court.</p>
+<h2>1.2 Scope</h2>
+<p>PCETS is a relational database and web application for one police district (several stations). It covers complaint
+registration, officer assignment, the investigation diary, evidence registration and custody transfers, witnesses,
+accused persons, charges, court references, case status workflow with a full audit trail, search and reporting. Court
+case management beyond references/hearing dates, payroll and FIR filing with external systems (CCTNS) are out of scope.</p>
+<h2>1.3 Objectives</h2>
+<ul>
+  <li>Design a normalized (3NF) relational schema for complaints, persons, officers, assignments, activities, evidence,
+      custody logs, witnesses, charges, court references and status histories.</li>
+  <li>Enforce the business rules <b>inside the database</b> — unique complaint/evidence IDs, complete custody transfer, valid
+      case status, no overlapping custody and mandatory closure details — using keys, CHECK constraints and triggers.</li>
+  <li>Provide views and reports: pending cases, officer load, evidence location, custody history, witnesses, case timeline and closures.</li>
+  <li>Build a secure, validated, transaction-aware application with role-based access for station staff.</li>
+  <li>Demonstrate correctness through systematic automated testing.</li>
+</ul>
+
+<!-- ======================= 2 ======================= -->
+<h1>2. Users and roles</h1>
+<table>
+  <tr><th>Role</th><th>Typical user</th><th>Main permissions</th></tr>
+  <tr><td><b>ADMIN</b></td><td>District system administrator</td><td>Everything, including officer management and the Integrity Lab</td></tr>
+  <tr><td><b>SHO</b></td><td>Station House Officer (Inspector)</td><td>Register &amp; edit complaints, assign/relieve officers, change status, <b>close</b> cases, all case actions, reports</td></tr>
+  <tr><td><b>IO</b></td><td>Investigating Officer (Sub-Inspector)</td><td>Register complaints, log activities, evidence, custody transfers, witnesses, accused, charges, court references, status updates (not closure)</td></tr>
+  <tr><td><b>CUSTODIAN</b></td><td>Malkhana in-charge (Head Constable)</td><td>Register evidence and transfer custody; read-only access to cases and reports</td></tr>
+</table>
+<p>Civilian <b>persons</b> (complainants, accused, witnesses) are data subjects, not system users. There is no login page: the
+application opens as the default user (<code>default_user</code> in <code>config.ini</code>, normally <code>admin</code>) and the
+<b>Acting as</b> selector in the sidebar switches to any station user. Permissions for the acting role are enforced on the server
+for every request (HTTP 403 otherwise), the UI hides actions the role cannot perform, and the acting officer is recorded in the audit trail.</p>
+
+<!-- ======================= 3 ======================= -->
+<h1>3. Requirements</h1>
+<h2>3.1 Functional requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Implemented in</th></tr>
+  {% for id, req, where in [
+    ('FR-01', 'Register a complaint with an existing or new complainant; issue a unique complaint number', 'Register complaint page; trigger trg_complaint_bi'),
+    ('FR-02', 'Assign / relieve officers with roles (LEAD, SUPPORT, FORENSIC, SURVEILLANCE); one active lead per case', 'Case → Officers tab'),
+    ('FR-03', 'Log investigation activities (site visit, raid, arrest, statement …) by assigned officers', 'Case → Investigation diary'),
+    ('FR-04', 'Register evidence with seal number; start chain of custody automatically', 'Evidence → Register'),
+    ('FR-05', 'Transfer custody between officers with purpose, location, time and seal check', 'Evidence → Transfer custody'),
+    ('FR-06', 'Record witnesses (with protected-witness flag) and accused persons', 'Case → Accused & witnesses'),
+    ('FR-07', 'Frame charges (act + section) against accused; add court references and hearings', 'Case → Charges & court'),
+    ('FR-08', 'Update case status through a valid workflow; closure requires details; re-open allowed', 'Update status dialog; trg_complaint_bu'),
+    ('FR-09', 'Maintain a tamper-proof status history and full case timeline', 'status_history, v_case_timeline'),
+    ('FR-10', 'Search complaints, evidence, persons and officers; filter lists', 'Global search, list filters'),
+    ('FR-11', 'Reports: pending cases, officer load, evidence location, custody history, witnesses, case timeline, closures (+ analytics)', 'Reports module, CSV export, print'),
+    ('FR-12', 'CRUD for persons and officers with referential protection', 'Persons, Officers modules'),
+    ('FR-13', 'Role-based access with an acting-user selector (no login page)', 'auth.py, PERMISSIONS map')] %}
+  <tr><td>{{ id }}</td><td>{{ req }}</td><td>{{ where }}</td></tr>{% endfor %}
+</table>
+<h2>3.2 Non-functional requirements</h2>
+<ul>
+  <li><b>Integrity:</b> every business rule is enforced by MySQL so it holds even if the application is bypassed.</li>
+  <li><b>Atomicity:</b> multi-step operations (registration, custody transfer, closure, lead replacement) run as single transactions.</li>
+  <li><b>Security:</b> role-based access for the acting user, CSRF tokens, parameterised SQL only.</li>
+  <li><b>Auditability:</b> custody log is append-only, status history cannot be edited or deleted, complaints cannot be deleted.</li>
+  <li><b>Performance:</b> indexes on all frequently searched/joined columns; views pre-join common report data.</li>
+  <li><b>Usability:</b> responsive UI (desktop and mobile), light/dark theme, field-level error messages, printable case file and custody sheet.</li>
+</ul>
+
+<!-- ======================= 4 ======================= -->
+<h1>4. Conceptual design (ER model)</h1>
+{% if er_png %}<div class="er"><img src="er_diagram.png" alt="ER diagram"></div>{% endif %}
+<p class="note">Crow's-foot ER diagram generated from <code>docs/er_diagram.mmd</code>. PK = primary key, FK = foreign key, UK = unique key.</p>
+<h2>4.1 Entities</h2>
+<table>
+  <tr><th>Entity</th><th>Description</th></tr>
+  {% for e, d in [('STATION', 'Police station / unit that registers complaints and employs officers'),
+    ('OFFICER', 'Police personnel with badge, rank and station; may have an app user account'),
+    ('PERSON', 'Any civilian — the same person can be complainant, accused or witness in different cases'),
+    ('COMPLAINT', 'The case (FIR) — strong entity at the centre of the model, with status and closure details'),
+    ('COMPLAINT_ACCUSED', 'Associative entity: persons accused in a complaint, with arrest/bail status'),
+    ('ASSIGNMENT', 'Associative entity with history: which officer works on which case, role and period'),
+    ('INVESTIGATION_ACTIVITY', 'Diary entry of an action taken in a case'),
+    ('EVIDENCE_ITEM', 'Seized / collected exhibit belonging to a complaint'),
+    ('CUSTODY_LOG', 'One custody period of an evidence item: who held it, where, why, from when to when'),
+    ('WITNESS', 'Statement of a person in a complaint'),
+    ('CHARGE', 'Legal section framed against an accused of a complaint'),
+    ('COURT_REFERENCE', 'Court case linked to a complaint with hearing date and verdict'),
+    ('STATUS_HISTORY', 'Audit trail of every status change of a complaint'),
+    ('APP_USER', 'Application user and role (selected via Acting as)')] %}
+  <tr><td class="mono"><b>{{ e }}</b></td><td>{{ d }}</td></tr>{% endfor %}
+</table>
+<h2>4.2 Relationships and cardinalities</h2>
+<table>
+  <tr><th>Relationship</th><th>Cardinality</th><th>Notes</th></tr>
+  {% for r, c, n in [('Station employs Officer', '1 : N', 'every officer belongs to exactly one station'),
+    ('Station registers Complaint', '1 : N', ''), ('Person files Complaint', '1 : N', 'complainant'),
+    ('Complaint — Person (accused)', 'M : N', 'resolved by COMPLAINT_ACCUSED'),
+    ('Complaint — Officer (assignment)', 'M : N', 'resolved by ASSIGNMENT, keeps history'),
+    ('Complaint has Activities', '1 : N', 'performed by one officer each'),
+    ('Complaint holds Evidence', '1 : N', 'collected by one officer'),
+    ('Evidence has Custody periods', '1 : N (≥1)', 'total participation — every item has an initial seizure'),
+    ('Complaint — Person (witness)', 'M : N', 'resolved by WITNESS'),
+    ('Complaint_Accused is charged with Charge', '1 : N', 'composite FK (complaint_id, person_id)'),
+    ('Complaint is tried in Court reference', '1 : N', ''),
+    ('Complaint has Status history', '1 : N (≥1)', 'first row written on registration'),
+    ('Officer logs in as App user', '1 : 0..1', 'ADMIN may have no officer')] %}
+  <tr><td>{{ r }}</td><td>{{ c }}</td><td>{{ n }}</td></tr>{% endfor %}
+</table>
+
+<!-- ======================= 5 ======================= -->
+<h1>5. Relational schema</h1>
+<p>Primary keys are <u>underlined</u>, foreign keys are shown in blue as <i>column → table</i>.</p>
+{% for rel in [
+  'STATION(<u>station_id</u>, station_code UK, station_name, district, address, phone)',
+  'OFFICER(<u>officer_id</u>, badge_no UK, full_name, officer_rank, <i>station_id → STATION</i>, phone UK, email UK, date_joined, is_active)',
+  'PERSON(<u>person_id</u>, full_name, gender, date_of_birth, phone, email, address, id_proof_type, id_proof_no, created_at)   UK(id_proof_type, id_proof_no)',
+  'COMPLAINT(<u>complaint_id</u>, complaint_no UK, <i>station_id → STATION</i>, <i>complainant_id → PERSON</i>, title, description, category, priority, incident_datetime, incident_location, registered_at, <i>registered_by → OFFICER</i>, status, closure_date, closure_type, closure_remarks, <i>closed_by → OFFICER</i>)',
+  'COMPLAINT_ACCUSED(<u><i>complaint_id → COMPLAINT</i>, <i>person_id → PERSON</i></u>, accused_status, added_at, remarks)',
+  'ASSIGNMENT(<u>assignment_id</u>, <i>complaint_id → COMPLAINT</i>, <i>officer_id → OFFICER</i>, assignment_role, assigned_at, relieved_at, <i>assigned_by → OFFICER</i>, remarks)',
+  'INVESTIGATION_ACTIVITY(<u>activity_id</u>, <i>complaint_id → COMPLAINT</i>, <i>officer_id → OFFICER</i>, activity_type, activity_time, location, description, outcome, logged_at)',
+  'EVIDENCE_ITEM(<u>evidence_id</u>, evidence_no UK, <i>complaint_id → COMPLAINT</i>, category, description, quantity, item_condition, seal_no UK, collected_at, <i>collected_by → OFFICER</i>, collected_from, registered_at)',
+  'CUSTODY_LOG(<u>custody_id</u>, <i>evidence_id → EVIDENCE_ITEM</i>, <i>from_officer_id → OFFICER</i>, <i>to_officer_id → OFFICER</i>, location, purpose, received_at, released_at, seal_intact, remarks)',
+  'WITNESS(<u>witness_id</u>, <i>complaint_id → COMPLAINT</i>, <i>person_id → PERSON</i>, statement, statement_date, <i>recorded_by → OFFICER</i>, is_protected)   UK(complaint_id, person_id)',
+  'CHARGE(<u>charge_id</u>, <i>(complaint_id, accused_person_id) → COMPLAINT_ACCUSED</i>, act_name, section_code, offence_description, charged_on, <i>charged_by → OFFICER</i>)',
+  'COURT_REFERENCE(<u>court_ref_id</u>, <i>complaint_id → COMPLAINT</i>, court_case_no UK, court_name, court_type, filing_date, next_hearing_date, judge_name, case_stage, verdict)',
+  'STATUS_HISTORY(<u>history_id</u>, <i>complaint_id → COMPLAINT</i>, old_status, new_status, <i>changed_by → OFFICER</i>, changed_at, remarks)',
+  'APP_USER(<u>user_id</u>, username UK, password_hash, user_role, <i>officer_id → OFFICER</i> UK, is_active, last_login, created_at)'] %}
+<div class="rel">{{ rel|safe }}</div>{% endfor %}
+<p class="note">Surrogate integer keys are used everywhere for stable joins; the human-readable identifiers
+(<code>complaint_no</code>, <code>evidence_no</code>, <code>badge_no</code>, <code>court_case_no</code>) are candidate keys protected by UNIQUE constraints.</p>
+
+<!-- ======================= 6 ======================= -->
+<h1>6. Functional dependencies and normalization</h1>
+<h2>6.1 Functional dependencies</h2>
+<table>
+  <tr><th>Relation</th><th>Functional dependencies (non-trivial)</th></tr>
+  <tr><td>STATION</td><td>station_id → station_code, station_name, district, address, phone; station_code → station_id</td></tr>
+  <tr><td>OFFICER</td><td>officer_id → badge_no, full_name, officer_rank, station_id, phone, email, date_joined, is_active; badge_no → officer_id; phone → officer_id</td></tr>
+  <tr><td>PERSON</td><td>person_id → all attributes; (id_proof_type, id_proof_no) → person_id</td></tr>
+  <tr><td>COMPLAINT</td><td>complaint_id → complaint_no, station_id, complainant_id, title, description, category, priority, incident_datetime, incident_location, registered_at, registered_by, status, closure_*; complaint_no → complaint_id</td></tr>
+  <tr><td>COMPLAINT_ACCUSED</td><td>(complaint_id, person_id) → accused_status, added_at, remarks</td></tr>
+  <tr><td>ASSIGNMENT</td><td>assignment_id → complaint_id, officer_id, assignment_role, assigned_at, relieved_at, assigned_by, remarks</td></tr>
+  <tr><td>INVESTIGATION_ACTIVITY</td><td>activity_id → complaint_id, officer_id, activity_type, activity_time, location, description, outcome, logged_at</td></tr>
+  <tr><td>EVIDENCE_ITEM</td><td>evidence_id → evidence_no, complaint_id, category, description, quantity, item_condition, seal_no, collected_*; evidence_no → evidence_id; seal_no → evidence_id</td></tr>
+  <tr><td>CUSTODY_LOG</td><td>custody_id → evidence_id, from_officer_id, to_officer_id, location, purpose, received_at, released_at, seal_intact, remarks; (evidence_id, received_at) → custody_id (guaranteed by the no-overlap rule)</td></tr>
+  <tr><td>WITNESS</td><td>witness_id → complaint_id, person_id, statement, statement_date, recorded_by, is_protected; (complaint_id, person_id) → witness_id</td></tr>
+  <tr><td>CHARGE</td><td>charge_id → complaint_id, accused_person_id, act_name, section_code, offence_description, charged_on, charged_by; (complaint_id, accused_person_id, act_name, section_code) → charge_id</td></tr>
+  <tr><td>COURT_REFERENCE</td><td>court_ref_id → all; court_case_no → court_ref_id</td></tr>
+  <tr><td>STATUS_HISTORY</td><td>history_id → complaint_id, old_status, new_status, changed_by, changed_at, remarks</td></tr>
+  <tr><td>APP_USER</td><td>user_id → all; username → user_id; officer_id → user_id</td></tr>
+</table>
+<h2>6.2 Normal forms</h2>
+<ul>
+  <li><b>1NF</b> — every attribute is atomic: there are no repeating groups (multiple accused, witnesses, charges, custody
+      steps and status changes are stored as rows in their own tables, never as lists in a column).</li>
+  <li><b>2NF</b> — the only composite primary key is COMPLAINT_ACCUSED(complaint_id, person_id); its non-key attributes
+      (accused_status, added_at, remarks) describe the <i>pair</i>, not either part alone, so there is no partial dependency.
+      All other tables have single-column keys.</li>
+  <li><b>3NF</b> — in every relation each determinant of a non-trivial FD is a (candidate) key, so there are no transitive dependencies
+      (the schema is in fact in <b>BCNF</b>).</li>
+</ul>
+<h2>6.3 Normalization decisions</h2>
+<table>
+  <tr><th>Un-normalized design (register style)</th><th>Problem</th><th>Decision</th></tr>
+  <tr><td>evidence_item(current_holder, current_location, evidence_status)</td><td>Transitive dependency on the latest custody row; update anomaly — moving an item means updating two places</td><td>Holder, location and status are <b>derived</b> from the open CUSTODY_LOG row in view <code>v_evidence_location</code></td></tr>
+  <tr><td>complaint(officer_name, officer_rank, officer_station)</td><td>officer_id → name, rank (transitive), and only one officer per case</td><td>ASSIGNMENT table (M:N with history); officer details stored once in OFFICER</td></tr>
+  <tr><td>complaint(complainant_name, phone, address …)</td><td>Same person repeated in many cases, inconsistent updates</td><td>Single PERSON table referenced by complaint, accused and witness</td></tr>
+  <tr><td>complaint(accused1, accused2, sections …)</td><td>Repeating groups (violates 1NF)</td><td>COMPLAINT_ACCUSED and CHARGE tables</td></tr>
+  <tr><td>charge(complaint_id, person_id) with separate FKs</td><td>Allowed charging someone who is not an accused of that case</td><td>Composite FK to COMPLAINT_ACCUSED — the relationship itself is referenced</td></tr>
+  <tr><td>complaint(status) only</td><td>History of status changes lost</td><td>STATUS_HISTORY written by trigger</td></tr>
+</table>
+
+<!-- ======================= 7 ======================= -->
+<h1>7. Data dictionary</h1>
+<p>Generated from <code>information_schema</code> of database <code>{{ meta.db }}</code>. Key: PRI = primary key, UNI = unique, MUL = indexed/foreign key; NN = NOT NULL.</p>
+{% for t in meta.tables %}
+<h3>{{ loop.index }}. {{ t.name }} <span style="font-weight:400;color:#6b7590">— {{ t.rows }} sample rows</span></h3>
+<table>
+  <tr><th style="width:24%">Column</th><th style="width:22%">Type</th><th style="width:6%">Null</th><th style="width:7%">Key</th><th style="width:16%">Default</th><th>Extra</th></tr>
+  {% for c in meta.columns if c.table_name == t.name %}
+  <tr><td class="mono">{{ c.column_name }}</td><td class="mono">{{ c.column_type }}</td><td>{{ 'YES' if c.is_nullable == 'YES' else 'NN' }}</td>
+      <td>{% if c.column_key == 'PRI' %}<span class="tag t-pk">PK</span>{% elif c.column_key == 'UNI' %}<span class="tag t-uq">UNI</span>{% elif c.column_key == 'MUL' %}<span class="tag t-fk">MUL</span>{% endif %}</td>
+      <td class="mono">{{ c.column_default if c.column_default is not none else '' }}</td><td class="mono">{{ c.extra or '' }}</td></tr>
+  {% endfor %}
+</table>
+{% endfor %}
+
+<!-- ======================= 8 ======================= -->
+<h1>8. Integrity constraints and business rules</h1>
+<h2>8.1 Mandatory business rules</h2>
+<table>
+  <tr><th>Rule</th><th>How it is enforced</th></tr>
+  <tr><td><b>R1 Unique complaint / evidence IDs</b></td><td>UNIQUE <code>uq_complaint_no</code>, <code>uq_evidence_no</code>; numbers generated by triggers <code>trg_complaint_bi</code> / <code>trg_evidence_bi</code> in format CMP-YYYY-NNNNN / EVD-YYYY-NNNNN; CHECK with REGEXP on the format; numbers cannot be changed (trg_complaint_bu)</td></tr>
+  <tr><td><b>R2 Complete custody transfer</b></td><td>NOT NULL on to_officer, location, purpose, received_at; CHECK <code>chk_custody_from</code> (every non-seizure entry names the handing officer); trigger <code>trg_custody_bi</code>: handing officer must be the current holder, previous period must be released, new period must start exactly when the previous ended (no gap); remarks mandatory in the app for broken seal / return / disposal</td></tr>
+  <tr><td><b>R3 Valid case status</b></td><td>CHECK <code>chk_complaint_status</code> (5 values); trigger <code>trg_complaint_bu</code> enforces the workflow (REGISTERED→UNDER_INVESTIGATION→CHARGE_SHEETED→IN_COURT→CLOSED, closure from any open state, re-open from CLOSED) and preconditions (officer assigned, ≥1 charge, court reference)</td></tr>
+  <tr><td><b>R4 No overlapping custody</b></td><td>UNIQUE (evidence_id, open_key) on a generated column — at most one open custody period per item; interval-overlap check in <code>trg_custody_bi</code>; append-only log (<code>trg_custody_bu</code>, <code>trg_custody_bd</code>); final RETURN/DISPOSAL ends the chain</td></tr>
+  <tr><td><b>R5 Closure details required</b></td><td>CHECK <code>chk_complaint_closure</code>: status CLOSED ⇔ closure_date, closure_type, closure_remarks and closed_by are all present; CHECK <code>chk_complaint_closuredate</code>: closure not before registration</td></tr>
+</table>
+<h2>8.2 Additional rules</h2>
+<ul>
+  <li>Only one active LEAD officer per case and no duplicate active assignment (UNIQUE on generated columns <code>lead_key</code>, <code>active_key</code>).</li>
+  <li>Inactive officers cannot be assigned or receive custody; activities only by officers assigned at that time; nothing can be added to a closed case.</li>
+  <li>An accused cannot be a witness (or complainant) in the same case; charges only against accused of that case (composite FK).</li>
+  <li>Court reference only after charge-sheet; verdict only when the court case is DISPOSED (CHECK).</li>
+  <li>ID-proof formats per type (Aadhaar, PAN, Voter ID, Passport, DL), Indian mobile numbers and badge numbers validated by CHECK + REGEXP.</li>
+  <li>Complaints cannot be deleted and the status history cannot be modified (triggers).</li>
+</ul>
+<h2>8.3 Constraint inventory</h2>
+{% set kinds = {} %}{% for c in meta.constraints %}{% set _ = kinds.update({c.constraint_type: kinds.get(c.constraint_type, 0) + 1}) %}{% endfor %}
+<p>{% for k, v in kinds.items() %}<b>{{ v }}</b> {{ k }}{{ ', ' if not loop.last }}{% endfor %} constraints,
+   <b>{{ meta.triggers|length }}</b> triggers. CHECK constraints:</p>
+<table>
+  <tr><th>Table</th><th>Constraint</th><th>Expression</th></tr>
+  {% for c in meta.constraints if c.constraint_type == 'CHECK' %}
+  <tr><td class="mono">{{ c.table_name }}</td><td class="mono">{{ c.constraint_name }}</td><td class="mono" style="font-size:7.8pt">{{ c.check_clause|replace('`', '')|truncate(260) }}</td></tr>
+  {% endfor %}
+</table>
+
+<!-- ======================= 9 ======================= -->
+<h1>9. Triggers, procedures and functions</h1>
+{% set trig_desc = {
+  'trg_complaint_bi': 'Generate CMP number, normalise registration time, force initial REGISTERED status',
+  'trg_complaint_ai': 'Write the first status-history row',
+  'trg_complaint_bu': 'Status workflow + preconditions; complaint number immutable; closed case not editable',
+  'trg_complaint_au': 'Audit trail: write status_history on every status change (acting officer from @current_officer_id)',
+  'trg_complaint_bd': 'Forbid deleting complaints',
+  'trg_assignment_bi': 'Active officer only, case not closed, not before registration',
+  'trg_activity_bi': 'Case open, time valid, officer assigned at activity time',
+  'trg_evidence_bi': 'Generate EVD number; case open; collected after incident; active collector',
+  'trg_custody_bi': 'Complete-transfer, no-gap, no-overlap and final-disposition checks',
+  'trg_custody_bu': 'Append-only: only release time can be set, once',
+  'trg_custody_bd': 'Forbid deleting custody records',
+  'trg_witness_bi': 'Case open; accused cannot be witness',
+  'trg_accused_bi': 'Case open; complainant / witness cannot be accused',
+  'trg_charge_bi': 'Charges only while under investigation or later',
+  'trg_court_bi': 'Court reference only after charge-sheet',
+  'trg_history_bu': 'Audit log cannot be modified', 'trg_history_bd': 'Audit log cannot be deleted'} %}
+<table>
+  <tr><th>Trigger</th><th>Timing</th><th>Table</th><th>Purpose</th></tr>
+  {% for t in meta.triggers %}<tr><td class="mono">{{ t.trigger_name }}</td><td>{{ t.action_timing }} {{ t.event_manipulation }}</td>
+    <td class="mono">{{ t.event_object_table }}</td><td>{{ trig_desc.get(t.trigger_name, '') }}</td></tr>{% endfor %}
+</table>
+<table>
+  <tr><th>Routine</th><th>Type</th><th>Purpose</th></tr>
+  {% set rdesc = {'sp_transfer_custody': 'Atomic custody transfer (SELECT … FOR UPDATE, release + insert, ROLLBACK on error)',
+                  'sp_close_complaint': 'Atomic closure: close case and relieve all active officers',
+                  'fn_current_holder': 'Current custodian of an evidence item', 'fn_case_age_days': 'Age of a case in days'} %}
+  {% for r in meta.routines %}<tr><td class="mono">{{ r.routine_name }}</td><td>{{ r.routine_type }}</td><td>{{ rdesc.get(r.routine_name, '') }}</td></tr>{% endfor %}
+</table>
+<pre>-- excerpt: no overlapping custody (trg_custody_bi)
+SELECT COUNT(*) INTO v_overlap FROM custody_log
+ WHERE evidence_id = NEW.evidence_id
+   AND NEW.received_at &lt; COALESCE(released_at, '9999-12-31 23:59:59')
+   AND COALESCE(NEW.released_at, '9999-12-31 23:59:59') &gt; received_at;
+IF v_overlap &gt; 0 THEN
+   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Overlapping custody period for this evidence item.';
+END IF;</pre>
+
+<!-- ======================= 10 ======================= -->
+<h1>10. Views and SQL queries</h1>
+<table>
+  <tr><th>View</th><th>Report</th><th>Techniques</th></tr>
+  {% for v, r, t in [('v_pending_cases', 'Pending cases', 'JOIN, LEFT JOIN, correlated sub-queries, DATEDIFF'),
+    ('v_officer_load', 'Officer load', 'LEFT JOIN, COUNT(DISTINCT CASE …), GROUP BY, sub-queries'),
+    ('v_evidence_location', 'Evidence location', 'JOIN on open custody row, derived status via CASE'),
+    ('v_custody_history', 'Custody history', 'Self-referencing officer joins, ROW_NUMBER() window, TIMESTAMPDIFF'),
+    ('v_case_witnesses', 'Witnesses', 'Multi-table JOIN'),
+    ('v_case_timeline', 'Case timeline', 'UNION ALL of 8 event sources'),
+    ('v_closed_cases', 'Closures', 'JOIN, scalar sub-queries, DATEDIFF'),
+    ('v_case_summary', 'Case list (application)', 'JOIN + LEFT JOIN + sub-queries'),
+    ('v_upcoming_hearings', 'Upcoming hearings', 'JOIN, date filter')] %}
+  <tr><td class="mono">{{ v }}</td><td>{{ r }}</td><td>{{ t }}</td></tr>{% endfor %}
+</table>
+<p><code>sql/05_report_queries.sql</code> contains 25 demonstration queries: the 7 required reports, multi-table INNER/LEFT
+joins, cross-station custody hand-overs, GROUP BY / HAVING / ROLLUP, conditional aggregation (pivot), nested and correlated
+sub-queries, EXISTS / NOT EXISTS / IN, derived tables, window functions (RANK, ROW_NUMBER, LAG, LEAD), a CTE and a stored function call.</p>
+<pre>-- Q22 Time spent in each status (LEAD window function over the audit trail)
+WITH status_periods AS (
+    SELECT complaint_id, new_status, changed_at,
+           LEAD(changed_at) OVER (PARTITION BY complaint_id ORDER BY changed_at) AS next_change
+      FROM status_history)
+SELECT c.complaint_no, sp.new_status, sp.changed_at,
+       DATEDIFF(COALESCE(sp.next_change, NOW()), sp.changed_at) AS days_in_status
+  FROM status_periods sp JOIN complaint c ON c.complaint_id = sp.complaint_id;
+
+-- Q17 Open cases with no activity in the last 30 days (NOT EXISTS)
+SELECT c.complaint_no, c.title, c.status FROM complaint c
+ WHERE c.status &lt;&gt; 'CLOSED'
+   AND NOT EXISTS (SELECT 1 FROM investigation_activity a
+                    WHERE a.complaint_id = c.complaint_id
+                      AND a.activity_time &gt;= CURDATE() - INTERVAL 30 DAY);</pre>
+
+<!-- ======================= 11 ======================= -->
+<h1>11. Indexing strategy</h1>
+<p>InnoDB automatically indexes primary keys, unique keys and foreign keys. Additional secondary indexes were created for the
+most frequent search, filter, sort and join paths:</p>
+<table>
+  <tr><th>Index</th><th>Columns</th><th>Used by</th></tr>
+  {% set why = {'idx_complaint_status_reg': 'Pending/closed lists sorted by date, dashboard counts',
+    'idx_complaint_category': 'Category filter, analytics', 'idx_complaint_incident': 'Date-range queries',
+    'idx_complaint_priority': 'Priority filter / sort', 'ft_complaint_text': 'Full-text search on title and description',
+    'idx_person_name': 'Person search / picker', 'idx_person_phone': 'Search by phone', 'idx_officer_name': 'Officer search',
+    'idx_assignment_officer': 'Officer load (active assignments)', 'idx_activity_case_time': 'Case diary, last activity, stale cases',
+    'idx_evidence_category': 'Evidence filter', 'idx_custody_evidence_time': 'Chain of custody ordering, overlap check in trigger',
+    'idx_custody_holder': 'Evidence held by an officer', 'idx_history_case_time': 'Status audit / timeline',
+    'idx_court_next_hearing': 'Upcoming hearings'} %}
+  {% for i in meta.indexes if i.index_name in why %}
+  <tr><td class="mono">{{ i.index_name }}</td><td class="mono">{{ i.table_name }}({{ i.cols }})</td><td>{{ why[i.index_name] }}</td></tr>{% endfor %}
+</table>
+
+<!-- ======================= 12 ======================= -->
+<h1>12. Transactions and concurrency</h1>
+<p>The application uses an explicit <code>START TRANSACTION … COMMIT</code> block (<code>db.transaction()</code>, isolation READ COMMITTED);
+any exception triggers <code>ROLLBACK</code>, so a multi-step operation is all-or-nothing:</p>
+<table>
+  <tr><th>Operation</th><th>Statements in one transaction</th></tr>
+  <tr><td>Register complaint</td><td>INSERT person (if new) → INSERT complaint (+ trigger history) → optional INSERT assignment + UPDATE status</td></tr>
+  <tr><td>Register evidence</td><td>INSERT evidence_item → INSERT custody (INITIAL_SEIZURE) → optional release + INSERT custody (STORAGE)</td></tr>
+  <tr><td>Custody transfer</td><td><b>SELECT … FOR UPDATE</b> on the open custody row → UPDATE released_at → INSERT new period</td></tr>
+  <tr><td>Status change</td><td>SELECT status FOR UPDATE (optimistic check) → UPDATE complaint (+ audit trigger) → relieve officers on closure</td></tr>
+  <tr><td>Replace lead / role change</td><td>Lock current lead → relieve → INSERT new assignment</td></tr>
+  <tr><td>Add witness / accused with new person</td><td>INSERT person → INSERT witness / complaint_accused</td></tr>
+</table>
+<p>The row lock taken with <code>FOR UPDATE</code> serialises two custodians trying to transfer the same exhibit at the same moment —
+the second waits, then fails the no-overlap check instead of creating two current holders. Test <b>TC-10</b> proves rollback: a valid new
+person is <i>not</i> saved when the complaint insert fails. Stored procedures <code>sp_transfer_custody</code> and
+<code>sp_close_complaint</code> show the same pattern in pure SQL with an EXIT HANDLER that rolls back.</p>
+
+<!-- ======================= 13 ======================= -->
+<h1>13. Application design</h1>
+<h2>13.1 Architecture</h2>
+<pre>Browser (HTML/CSS/JS)  ──HTTP──▶  Flask routes (blueprints)      complaints, evidence, persons, officers, reports, admin, auth
+                                    │  form validation (validators.py) · RBAC (auth.requires) · CSRF
+                                    ▼
+                                Services (business logic + transactions)
+                                    │  parameterised SQL only
+                                    ▼
+                                db.py  — connection pool, transaction(), error translation
+                                    ▼
+                                MySQL 8: tables · constraints · triggers · views · procedures</pre>
+<h2>13.2 Modules</h2>
+<table>
+  <tr><th>Module</th><th>Features</th></tr>
+  <tr><td>Dashboard</td><td>KPIs, status donut, registrations vs closures chart, officer workload, crime categories, items needing attention, live activity feed</td></tr>
+  <tr><td>Complaints</td><td>Search/filter/sort/paginate; register (existing or new complainant, optional lead); case page with status stepper and tabs: overview, officers, investigation diary, evidence, accused &amp; witnesses, charges &amp; court, timeline, status audit; printable case file</td></tr>
+  <tr><td>Evidence &amp; custody</td><td>Malkhana register with derived status; register evidence (+ deposit); visual chain of custody; atomic transfer dialog; printable custody sheet</td></tr>
+  <tr><td>Persons / Officers</td><td>Full CRUD, involvement across cases, workload profile, activation/deactivation</td></tr>
+  <tr><td>Reports</td><td>12 parameterised reports with charts, quick filter, print and CSV export</td></tr>
+  <tr><td>Integrity lab</td><td>Runs 26 invalid SQL scenarios against MySQL (always rolled back) and shows the database error for each rule</td></tr>
+  <tr><td>Database explorer</td><td>Tables, columns, constraints, relationships, triggers, routines and indexes from information_schema</td></tr>
+</table>
+<h2>13.3 Validation and error handling</h2>
+<ul>
+  <li><b>Two layers:</b> application validation (required fields, lengths, formats, dates not in the future, allowed choices) gives field-level
+      messages; the database re-checks everything as the final authority.</li>
+  <li>MySQL errors are translated into readable messages: 1062 duplicate → which key, 3819 CHECK → rule description, 1451/1452 FK, 1644 trigger
+      SIGNAL text, 1048 NOT NULL. The form is re-displayed with the user's input and the dialog re-opened.</li>
+  <li>Custom 400/403/404/500/503 pages; unexpected errors are logged to <code>logs/app.log</code>; a database-down page explains how to fix the connection.</li>
+</ul>
+<h2>13.4 Security</h2>
+<ul><li>No login page (not required by the brief): the acting user is chosen from the sidebar; session cookies are HttpOnly + SameSite.
+      <code>app_user</code> keeps PBKDF2 password hashes so a login screen can be re-enabled for real deployment.</li>
+  <li>Role-based access checked on every route; CSRF token on every POST form; all SQL parameterised (no string concatenation of user input).</li>
+  <li>ID-proof numbers masked in lists; protected-witness names hidden in the printable case file.</li></ul>
+
+<!-- ======================= 14 ======================= -->
+<h1>14. Testing</h1>
+<h2>14.1 Strategy</h2>
+<ul>
+  <li><b>Automated functional tests</b> (<code>tests/test_app.py</code>, Python unittest): drive the real application through HTTP against a
+      separate database <code>police_evidence_test</code> rebuilt from the SQL scripts on each run.</li>
+  <li><b>Database negative tests</b> (<code>sql/06_constraint_tests.sql</code>): 28 invalid statements, each must fail.</li>
+  <li><b>Integrity Lab</b>: 26 live scenarios proving every rule is enforced by MySQL itself.</li>
+  <li><b>Manual UI tests</b> on desktop and mobile widths, light and dark themes (see output screens).</li>
+</ul>
+<h2>14.2 Automated test results — {{ results.ran - results.failed|length }} / {{ results.ran }} passed ({{ '%.1f'|format(results.time) }} s)</h2>
+<table>
+  <tr><th style="width:7%">ID</th><th style="width:15%">Module</th><th>Scenario</th><th>Expected result</th><th style="width:7%">Result</th></tr>
+  {% for tid, meth, module, scen, exp in tests %}
+  <tr><td>{{ tid }}</td><td>{{ module }}</td><td>{{ scen }}</td><td>{{ exp }}</td>
+      <td class="{{ 'fail' if meth in results.failed else 'pass' }}">{{ 'FAIL' if meth in results.failed else 'PASS' }}</td></tr>
+  {% endfor %}
+</table>
+<h2>14.3 Database-level integrity results</h2>
+{% set ok = integrity.values()|selectattr('passed')|list|length %}
+<p><b>{{ ok }} / {{ integrity|length }}</b> invalid operations were rejected by MySQL.</p>
+<table>
+  <tr><th>Rule</th><th>Scenario</th><th>Enforced by</th><th>MySQL response</th></tr>
+  {% for key, sc in scenarios.items() %}{% set r = integrity[key] %}
+  <tr><td>{{ sc.rule }}</td><td>{{ sc.title }}</td><td class="mono" style="font-size:8pt">{{ sc.mechanism }}</td>
+      <td class="{{ 'pass' if r.passed else 'fail' }}" style="font-weight:500">{% if r.code %}ERROR {{ r.code }}: {% endif %}{{ r.error|truncate(110) }}</td></tr>
+  {% endfor %}
+</table>
+
+<!-- ======================= 15 ======================= -->
+<h1>15. Output screens</h1>
+{% set captions = {
+  '02_dashboard.png': 'Dashboard — KPIs, status donut, trend chart, workload, attention list',
+  '03_complaints_list.png': 'Complaint register with search, filters, sorting and pagination', '04_register_complaint.png': 'Complaint registration (existing / new complainant, optional lead)',
+  '05_case_overview.png': 'Case page — status stepper and overview', '06_case_officers.png': 'Officer assignments with history',
+  '07_case_investigation_diary.png': 'Investigation diary (activity log)', '08_case_accused_witnesses.png': 'Accused and witnesses (protected witnesses)',
+  '09_case_charges_court.png': 'Charges and court references', '10_case_timeline.png': 'Complete case timeline (v_case_timeline)',
+  '11_case_status_audit.png': 'Status audit trail written by trigger', '12_evidence_list.png': 'Malkhana register with derived status',
+  '13_register_evidence.png': 'Evidence registration with optional deposit', '14_chain_of_custody.png': 'Chain of custody — item returned to owner (final)',
+  '15_evidence_in_lab.png': 'Evidence currently in the forensic lab', '16_persons.png': 'Person register with roles',
+  '17_person_involvement.png': 'Person involvement across cases', '18_officers.png': 'Officers and station summary',
+  '19_officer_profile.png': 'Officer workload profile', '20_reports_hub.png': 'Reports hub',
+  '21_report_pending_cases.png': 'Report — pending cases', '22_report_officer_load.png': 'Report — officer load',
+  '23_report_evidence_location.png': 'Report — evidence location', '24_report_custody_history.png': 'Report — custody history',
+  '25_report_witnesses.png': 'Report — witnesses', '26_report_case_timeline.png': 'Report — case timeline',
+  '27_report_closures.png': 'Report — closures', '28_report_custody_audit.png': 'Report — chain-of-custody integrity audit (window functions)',
+  '29_integrity_lab.png': 'Integrity lab — every rule rejected by MySQL', '30_database_explorer.png': 'Database explorer (information_schema)',
+  '31_search.png': 'Global search', '32_case_file_print.png': 'Printable case file', '33_custody_sheet_print.png': 'Printable custody sheet / evidence tag',
+  '34_access_denied.png': 'Role-based access control — acting as an IO, adding an officer is denied'} %}
+{% for s in shots %}
+<div class="shot"><img src="screenshots/{{ s }}" alt="{{ s }}"><div class="cap">Figure {{ loop.index }}. {{ captions.get(s, s) }}</div></div>
+{% endfor %}
+
+<!-- ======================= 16 ======================= -->
+<h1>16. Conclusion and future scope</h1>
+<p>PCETS replaces fragmented station registers with a single normalized database whose rules cannot be bypassed: complaint and
+evidence identifiers are unique, every custody hand-over is complete and gap-free, custody periods never overlap, case status follows
+a valid workflow with a permanent audit trail, and a case cannot be closed without its closure details. The Flask application exposes
+all required operations — complaint registration, officer assignment, activity logging, evidence registration, custody transfer, witness
+entry, status update and reporting — with validation, transactions, role-based security and a modern responsive interface.
+{{ results.ran }} automated tests and {{ integrity|length }} database-level scenarios verify the behaviour.</p>
+<h2>Future scope</h2>
+<ul><li>Attachments (photos, PDFs of statements) stored with hash values to prove evidence files are unaltered.</li>
+  <li>QR codes on evidence tags scanned at hand-over; SMS/e-mail alerts for hearing dates and long lab stays.</li>
+  <li>Integration with CCTNS and e-Courts APIs; multi-district partitioning; read replicas for analytics.</li></ul>
+
+<!-- ======================= APPENDICES ======================= -->
+<h1>Appendix A. Installation and running</h1>
+<pre>1. Install MySQL 8.0 and Python 3.10+
+2. pip install -r requirements.txt
+3. Edit config.ini  (MySQL host / user / password)
+4. python setup_db.py          # creates police_evidence_db, loads schema, triggers, views and sample data
+5. python run.py               # open http://127.0.0.1:5000
+6. python -m unittest -v tests.test_app     # automated tests (uses a separate test database)
+
+No login: the app opens as admin; switch to vikram (SHO), anjali (IO), suresh (Custodian)… with "Acting as" in the sidebar
+SQL only:     run sql/00 … sql/04 in MySQL Workbench; sql/05 = report queries; sql/06 = negative tests (mysql --force)</pre>
+<h1>Appendix B. Project structure</h1>
+<pre>Police Evidence Tracking/
+├── config.ini · requirements.txt · run.py · setup_db.py · README.md
+├── sql/       00_create_database · 01_schema · 02_triggers_procedures · 03_views · 04_seed_data · 05_report_queries · 06_constraint_tests
+├── police_app/
+│   ├── app.py (factory, filters, error pages) · auth.py (acting user, RBAC, CSRF) · db.py (pool, transactions, error translation)
+│   ├── validators.py · constants.py
+│   ├── services/  complaint · evidence · person · officer · report · dashboard · integrity
+│   ├── routes/    main · complaints · evidence · persons · officers · reports · admin
+│   ├── templates/ (Jinja2)  ·  static/css/app.css  ·  static/js/app.js
+├── tests/test_app.py
+├── tools/  capture_screens.py · build_report.py · report_template.html
+└── docs/   Project_Report.html/.pdf · TEST_CASES.md · er_diagram.mmd/.png · screenshots/</pre>
+<h1>Appendix C. Sample data</h1>
+<table>
+  <tr><th>Table</th><th>Rows</th><th>Table</th><th>Rows</th></tr>
+  {% set items = counts|dictsort %}
+  {% for i in range(0, items|length, 2) %}
+  <tr><td class="mono">{{ items[i][0] }}</td><td>{{ items[i][1] }}</td>
+      <td class="mono">{{ items[i+1][0] if i + 1 < items|length }}</td><td>{{ items[i+1][1] if i + 1 < items|length }}</td></tr>
+  {% endfor %}
+</table>
+<p>The sample data describes 20 realistic 2026 cases across 4 Pune stations (robbery, burglary, cyber fraud, narcotics, missing person,
+domestic violence …) at every stage of the workflow, 22 evidence items with 56 custody periods (including forensic lab visits, court
+production, return to owner and disposal) — all inserted through the triggers, which proves the rules are mutually consistent.</p>
+
+</div></body></html>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ 'Edit ' ~ officer.full_name if officer else 'Add officer' }}{% endblock %}
+{% block content %}
+{% set fs = form_state %}
+{% set o = officer %}
+<div class="crumbs"><a href="{{ url_for('officers.index') }}">Officers</a>{{ m.icon('chevron-right', 'icon-sm') }}{{ o.full_name if o else 'New' }}</div>
+<div class="page-head"><div>
+  <div class="eyebrow">{{ m.icon('shield', 'icon-sm') }} Personnel record</div>
+  <h1>{{ 'Edit ' ~ o.full_name if o else 'Add an officer' }}</h1>
+  <p>Badge number and phone must be unique; rank must be one of the allowed ranks (CHECK constraint).</p>
+</div></div>
+<form method="post" novalidate style="max-width:860px">
+  {{ m.csrf() }}
+  <div class="card">
+    {{ m.form_errors(fs, 'officer') }}
+    <div class="form-section"><div class="form-grid">
+      {{ m.input(fs, 'officer', 'full_name', 'Full name', value=o.full_name if o, required=True) }}
+      {{ m.input(fs, 'officer', 'badge_no', 'Badge number', value=o.badge_no if o, required=True, placeholder='MH12-1234') }}
+      {{ m.select(fs, 'officer', 'officer_rank', 'Rank', seq_opts(C.RANKS), value=o.officer_rank if o, required=True, empty='Select…') }}
+      {{ m.select(fs, 'officer', 'station_id', 'Station', station_opts(stations), value=o.station_id if o, required=True, empty='Select…') }}
+      {{ m.input(fs, 'officer', 'phone', 'Mobile', type='tel', value=o.phone if o, required=True) }}
+      {{ m.input(fs, 'officer', 'email', 'Email', type='email', value=o.email if o) }}
+      {{ m.input(fs, 'officer', 'date_joined', 'Date joined', type='date', value=o.date_joined if o, required=True, attrs='data-max-today') }}
+    </div></div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{{ url_for('officers.detail', officer_id=o.officer_id) if o else url_for('officers.index') }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ m.icon('check') }} {{ 'Save changes' if o else 'Add officer' }}</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

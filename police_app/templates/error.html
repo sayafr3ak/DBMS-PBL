@@ -1,0 +1,16 @@
+{% if g.user %}{% extends "base.html" %}{% else %}{% extends "bare.html" %}{% endif %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="error-page">
+  <div>
+    <div class="code">{{ code }}</div>
+    <h1 class="mt-2">{{ title }}</h1>
+    <p class="muted mt-1" style="max-width:520px">{{ message }}</p>
+    <div class="row mt-3" style="justify-content:center">
+      <a class="btn" href="javascript:history.back()">{{ m.icon('arrow-left') }} Go back</a>
+      <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">{{ m.icon('dashboard') }} Dashboard</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

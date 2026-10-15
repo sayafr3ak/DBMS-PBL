@@ -1,0 +1,82 @@
+{% import "partials/macros.html" as m with context %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Case file {{ c.complaint_no }}</title>
+  <style>
+    body { font: 12.5px/1.5 "Segoe UI", Arial, sans-serif; color: #111; margin: 0; background: #e9ecf2; }
+    .page { max-width: 860px; margin: 24px auto; background: #fff; padding: 40px 48px; box-shadow: 0 10px 40px rgba(0,0,0,.12); }
+    header { display: flex; justify-content: space-between; border-bottom: 3px double #1b2a6b; padding-bottom: 14px; margin-bottom: 18px; }
+    header h1 { margin: 0; font-size: 20px; color: #1b2a6b; letter-spacing: .02em; }
+    header .sub { color: #555; font-size: 12px; }
+    .no { font: 700 18px Consolas, monospace; text-align: right; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #1b2a6b; border-bottom: 1px solid #ccd; padding-bottom: 4px; margin: 22px 0 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccd; padding: 5px 8px; text-align: left; vertical-align: top; }
+    th { background: #f1f3f9; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .kv td:first-child { width: 180px; background: #f7f8fb; font-weight: 600; }
+    .narr { border: 1px solid #ccd; padding: 10px 12px; background: #fafbfd; white-space: pre-line; }
+    .sig { display: flex; justify-content: space-between; margin-top: 60px; }
+    .sig div { border-top: 1px solid #333; width: 220px; text-align: center; padding-top: 4px; font-size: 11px; }
+    .bar { max-width: 860px; margin: 16px auto 0; display: flex; gap: 8px; justify-content: flex-end; }
+    .bar button { font: 600 13px "Segoe UI"; padding: 8px 16px; border-radius: 8px; border: 0; background: #3d5afe; color: #fff; cursor: pointer; }
+    @media print { body { background: #fff; } .page { box-shadow: none; margin: 0; padding: 0; } .bar { display: none; } }
+  </style>
+</head>
+<body>
+<div class="bar"><button onclick="window.print()">Print / Save as PDF</button></div>
+<div class="page">
+  <header>
+    <div><h1>CASE FILE — {{ c.station_name|upper }}</h1>
+      <div class="sub">{{ c.district }} · Police Complaint &amp; Evidence Tracking System</div></div>
+    <div class="no">{{ c.complaint_no }}<div class="sub">Printed {{ now|dt }}</div></div>
+  </header>
+
+  <table class="kv">
+    <tr><td>Title</td><td>{{ c.title }}</td></tr>
+    <tr><td>Category / Priority</td><td>{{ c.category|label }} / {{ c.priority|label }}</td></tr>
+    <tr><td>Status</td><td><b>{{ c.status|label }}</b>{% if c.status == 'CLOSED' %} — {{ c.closure_type|label }} on {{ c.closure_date|d }} by {{ c.closed_by_name }}{% endif %}</td></tr>
+    <tr><td>Incident</td><td>{{ c.incident_datetime|dt }} at {{ c.incident_location }}</td></tr>
+    <tr><td>Registered</td><td>{{ c.registered_at|dt }} by {{ c.registered_by_name or '—' }}</td></tr>
+    <tr><td>Complainant</td><td>{{ c.complainant_name }}{% if c.complainant_phone %}, {{ c.complainant_phone }}{% endif %} — {{ c.complainant_address }}</td></tr>
+  </table>
+
+  <h2>Narrative</h2>
+  <div class="narr">{{ c.description }}</div>
+  {% if c.status == 'CLOSED' %}<h2>Closure remarks</h2><div class="narr">{{ c.closure_remarks }}</div>{% endif %}
+
+  <h2>Investigation team</h2>
+  <table><tr><th>Officer</th><th>Role</th><th>Assigned</th><th>Relieved</th></tr>
+    {% for a in assignments %}<tr><td>{{ a.full_name }} ({{ a.badge_no }})</td><td>{{ a.assignment_role|label }}</td><td>{{ a.assigned_at|dt }}</td><td>{{ a.relieved_at|dt }}</td></tr>
+    {% else %}<tr><td colspan="4">None</td></tr>{% endfor %}</table>
+
+  <h2>Accused &amp; charges</h2>
+  <table><tr><th>Accused</th><th>Status</th><th>Charges</th></tr>
+    {% for a in accused %}<tr><td>{{ a.full_name }}</td><td>{{ a.accused_status|label }}</td>
+      <td>{% for ch in charges if ch.accused_person_id == a.person_id %}{{ ch.act_name }} {{ ch.section_code }} — {{ ch.offence_description }}<br>{% else %}—{% endfor %}</td></tr>
+    {% else %}<tr><td colspan="3">None</td></tr>{% endfor %}</table>
+
+  <h2>Evidence &amp; current custody</h2>
+  <table><tr><th>Evidence</th><th>Description</th><th>Seal</th><th>Status</th><th>Held by / location</th></tr>
+    {% for e in evidence %}<tr><td>{{ e.evidence_no }}</td><td>{{ e.description }}</td><td>{{ e.seal_no or '—' }}</td><td>{{ e.evidence_status|label }}</td><td>{{ e.current_holder }} — {{ e.current_location }}</td></tr>
+    {% else %}<tr><td colspan="5">None</td></tr>{% endfor %}</table>
+
+  <h2>Witnesses</h2>
+  <table><tr><th>Witness</th><th>Recorded</th><th>Statement</th></tr>
+    {% for w in witnesses %}<tr><td>{{ 'PROTECTED WITNESS' if w.is_protected else w.witness_name }}</td><td>{{ w.statement_date|dt }}</td><td>{{ w.statement }}</td></tr>
+    {% else %}<tr><td colspan="3">None</td></tr>{% endfor %}</table>
+
+  <h2>Court</h2>
+  <table><tr><th>Case no.</th><th>Court</th><th>Filed</th><th>Next hearing</th><th>Stage / verdict</th></tr>
+    {% for cr in courts %}<tr><td>{{ cr.court_case_no }}</td><td>{{ cr.court_name }}</td><td>{{ cr.filing_date|d }}</td><td>{{ cr.next_hearing_date|d }}</td><td>{{ cr.case_stage|label }} / {{ cr.verdict|label }}</td></tr>
+    {% else %}<tr><td colspan="5">None</td></tr>{% endfor %}</table>
+
+  <h2>Chronology</h2>
+  <table><tr><th style="width:130px">When</th><th>Event</th><th>By</th></tr>
+    {% for e in timeline %}<tr><td>{{ e.event_time|dt }}</td><td><b>{{ e.event_title }}</b>{% if e.details %}<br><span style="color:#555">{{ e.details|truncate(160) }}</span>{% endif %}</td><td>{{ e.actor or '' }}</td></tr>{% endfor %}</table>
+
+  <div class="sig"><div>Investigating Officer</div><div>Station House Officer</div></div>
+</div>
+</body>
+</html>

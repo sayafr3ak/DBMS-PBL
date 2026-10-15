@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Complaints{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('folder', 'icon-sm') }} Case register</div>
+    <h1>Complaints</h1>
+    <p>Search, filter and open any complaint registered across all stations.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="{{ url_for('reports.view', key='pending-cases') }}">{{ m.icon('hourglass') }} Pending report</a>
+    {% if can('complaint.create') %}<a class="btn btn-primary" href="{{ url_for('complaints.new') }}">{{ m.icon('plus') }} Register complaint</a>{% endif %}
+  </div>
+</div>
+
+<div class="chips mb-3">
+  {% set base = filters.copy() %}
+  <a class="chip {{ 'active' if not filters.status and not filters.open and not filters.unassigned }}" href="{{ url_for('complaints.index') }}">All</a>
+  <a class="chip {{ 'active' if filters.open == '1' }}" href="{{ url_for('complaints.index', open=1) }}">Open</a>
+  {% for s, l in C.STATUSES.items() %}
+  <a class="chip {{ 'active' if filters.status == s }}" href="{{ url_for('complaints.index', status=s) }}">{{ l }}</a>
+  {% endfor %}
+  <a class="chip {{ 'active' if filters.unassigned == '1' }}" href="{{ url_for('complaints.index', unassigned=1) }}">{{ m.icon('alert', 'icon-sm') }} Unassigned</a>
+</div>
+
+<div class="card">
+  <form class="filters" method="get">
+    <div class="grow">{{ m.icon('search', 'icon-sm') }}
+      <input class="input" type="search" name="q" value="{{ filters.q }}" placeholder="Complaint no., title, complainant, location or officer…"></div>
+    <select class="input" name="category" data-autosubmit>
+      <option value="">All categories</option>
+      {% for k, v in C.CATEGORIES.items() %}<option value="{{ k }}" {{ 'selected' if filters.category == k }}>{{ v }}</option>{% endfor %}
+    </select>
+    <select class="input" name="priority" data-autosubmit>
+      <option value="">Any priority</option>
+      {% for k, v in C.PRIORITIES.items() %}<option value="{{ k }}" {{ 'selected' if filters.priority == k }}>{{ v }}</option>{% endfor %}
+    </select>
+    <select class="input" name="station" data-autosubmit>
+      <option value="">All stations</option>
+      {% for s in stations %}<option value="{{ s.station_id }}" {{ 'selected' if filters.station == s.station_id|string }}>{{ s.station_name }}</option>{% endfor %}
+    </select>
+    <select class="input" name="officer" data-autosubmit>
+      <option value="">Any officer</option>
+      {% for o in officers %}<option value="{{ o.officer_id }}" {{ 'selected' if filters.officer == o.officer_id|string }}>{{ o.full_name }}</option>{% endfor %}
+    </select>
+    <input class="input" type="date" name="date_from" value="{{ filters.date_from }}" title="Registered from">
+    <input class="input" type="date" name="date_to" value="{{ filters.date_to }}" title="Registered to">
+    <select class="input" name="sort" data-autosubmit>
+      {% for k, v in [('newest','Newest first'),('oldest','Oldest first'),('priority','Priority'),('status','Status'),('age','Age')] %}
+      <option value="{{ k }}" {{ 'selected' if filters.sort == k }}>{{ v }}</option>{% endfor %}
+    </select>
+    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+    {% if filters.open %}<input type="hidden" name="open" value="{{ filters.open }}">{% endif %}
+    <button class="btn btn-sm btn-primary" type="submit" data-keep>{{ m.icon('filter') }} Apply</button>
+    <a class="btn btn-sm btn-ghost" href="{{ url_for('complaints.index') }}">Reset</a>
+  </form>
+
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Complaint</th><th>Title &amp; complainant</th><th>Category</th><th>Priority</th><th>Status</th>
+        <th>Lead officer</th><th>Station</th><th class="right">Evidence</th><th>Registered</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+        <tr class="clickable" data-href="{{ url_for('complaints.detail', complaint_id=r.complaint_id) }}">
+          <td><a href="{{ url_for('complaints.detail', complaint_id=r.complaint_id) }}" class="idtag">{{ r.complaint_no }}</a></td>
+          <td class="title-cell" style="max-width:340px"><span class="truncate" style="display:block">{{ r.title }}</span>
+            <small>{{ m.icon('user', 'icon-sm') }} {{ r.complainant_name }}</small></td>
+          <td>{{ r.category|label }}</td>
+          <td>{{ m.priority(r.priority) }}</td>
+          <td>{{ m.status_badge(r.status) }}</td>
+          <td>{% if r.lead_officer_name %}<span class="row">{{ m.avatar(r.lead_officer_name, r.lead_officer_id, 'sm') }}<span class="small">{{ r.lead_officer_name }}</span></span>
+              {% elif r.status != 'CLOSED' %}<span class="badge red">Unassigned</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+          <td class="small">{{ r.station_name }}</td>
+          <td class="right"><span class="badge outline">{{ m.icon('box', 'icon-sm') }} {{ r.evidence_count }}</span></td>
+          <td class="small nowrap">{{ r.registered_at|d }}<br><span class="muted tiny">{{ r.age_days }} days</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ m.pager(pg, 'complaints.index', request.args) }}
+  {% else %}
+    {{ m.empty('No complaints found', 'Try a different search or clear the filters.', 'search') }}
+  {% endif %}
+</div>
+{% endblock %}

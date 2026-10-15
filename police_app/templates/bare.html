@@ -1,0 +1,14 @@
+{% import "partials/macros.html" as m with context %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · PCETS</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=1">
+</head>
+<body>
+{% include "partials/icons.html" %}
+<main class="content">{% block content %}{% endblock %}</main>
+</body>
+</html>

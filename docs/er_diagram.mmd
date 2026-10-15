@@ -1,0 +1,145 @@
+erDiagram
+    STATION ||--o{ OFFICER : "employs"
+    STATION ||--o{ COMPLAINT : "registers"
+    PERSON ||--o{ COMPLAINT : "files (complainant)"
+    COMPLAINT ||--o{ COMPLAINT_ACCUSED : "names"
+    PERSON ||--o{ COMPLAINT_ACCUSED : "is accused in"
+    COMPLAINT ||--o{ ASSIGNMENT : "is worked by"
+    OFFICER ||--o{ ASSIGNMENT : "is assigned"
+    COMPLAINT ||--o{ INVESTIGATION_ACTIVITY : "diary of"
+    OFFICER ||--o{ INVESTIGATION_ACTIVITY : "performs"
+    COMPLAINT ||--o{ EVIDENCE_ITEM : "holds"
+    OFFICER ||--o{ EVIDENCE_ITEM : "collects"
+    EVIDENCE_ITEM ||--|{ CUSTODY_LOG : "chain of custody"
+    OFFICER ||--o{ CUSTODY_LOG : "receives / hands over"
+    COMPLAINT ||--o{ WITNESS : "has"
+    PERSON ||--o{ WITNESS : "testifies as"
+    OFFICER ||--o{ WITNESS : "records"
+    COMPLAINT_ACCUSED ||--o{ CHARGE : "is charged with"
+    OFFICER ||--o{ CHARGE : "frames"
+    COMPLAINT ||--o{ COURT_REFERENCE : "is tried in"
+    COMPLAINT ||--|{ STATUS_HISTORY : "audit trail"
+    OFFICER ||--o{ STATUS_HISTORY : "changes"
+    OFFICER |o--o| APP_USER : "logs in as"
+
+    STATION {
+        int station_id PK
+        varchar station_code UK
+        varchar station_name
+        varchar district
+        varchar address
+    }
+    OFFICER {
+        int officer_id PK
+        varchar badge_no UK
+        varchar full_name
+        varchar officer_rank
+        int station_id FK
+        varchar phone UK
+        date date_joined
+        bool is_active
+    }
+    PERSON {
+        int person_id PK
+        varchar full_name
+        char gender
+        date date_of_birth
+        varchar phone
+        varchar address
+        varchar id_proof_type
+        varchar id_proof_no
+    }
+    COMPLAINT {
+        int complaint_id PK
+        varchar complaint_no UK
+        int station_id FK
+        int complainant_id FK
+        varchar title
+        varchar category
+        varchar priority
+        datetime incident_datetime
+        datetime registered_at
+        varchar status
+        date closure_date
+        varchar closure_type
+        int closed_by FK
+    }
+    COMPLAINT_ACCUSED {
+        int complaint_id PK,FK
+        int person_id PK,FK
+        varchar accused_status
+    }
+    ASSIGNMENT {
+        int assignment_id PK
+        int complaint_id FK
+        int officer_id FK
+        varchar assignment_role
+        datetime assigned_at
+        datetime relieved_at
+    }
+    INVESTIGATION_ACTIVITY {
+        int activity_id PK
+        int complaint_id FK
+        int officer_id FK
+        varchar activity_type
+        datetime activity_time
+        varchar description
+    }
+    EVIDENCE_ITEM {
+        int evidence_id PK
+        varchar evidence_no UK
+        int complaint_id FK
+        varchar category
+        varchar description
+        varchar seal_no UK
+        datetime collected_at
+        int collected_by FK
+    }
+    CUSTODY_LOG {
+        int custody_id PK
+        int evidence_id FK
+        int from_officer_id FK
+        int to_officer_id FK
+        varchar location
+        varchar purpose
+        datetime received_at
+        datetime released_at
+    }
+    WITNESS {
+        int witness_id PK
+        int complaint_id FK
+        int person_id FK
+        text statement
+        datetime statement_date
+        int recorded_by FK
+    }
+    CHARGE {
+        int charge_id PK
+        int complaint_id FK
+        int accused_person_id FK
+        varchar act_name
+        varchar section_code
+        date charged_on
+    }
+    COURT_REFERENCE {
+        int court_ref_id PK
+        int complaint_id FK
+        varchar court_case_no UK
+        varchar court_name
+        date next_hearing_date
+        varchar verdict
+    }
+    STATUS_HISTORY {
+        int history_id PK
+        int complaint_id FK
+        varchar old_status
+        varchar new_status
+        int changed_by FK
+        datetime changed_at
+    }
+    APP_USER {
+        int user_id PK
+        varchar username UK
+        varchar user_role
+        int officer_id FK
+    }

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('chart', 'icon-sm') }} Insights</div>
+    <h1>Reports</h1>
+    <p>Every report runs live SQL against the database views — filter, print or export to CSV.</p>
+  </div>
+</div>
+{% for group, reps in groups.items() %}
+<h3 class="mb-2 mt-3" style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em">{{ group }}</h3>
+<div class="grid g-4 mb-3">
+  {% for r in reps %}
+  <a class="report-card" href="{{ url_for('reports.view', key=r.key) }}">
+    <span class="ico-chip {{ ['blue','violet','amber','green','cyan','red'][loop.index0 % 6] }}">{{ m.icon(r.icon if r.icon != 'check-circle' else 'check-circle') }}</span>
+    <h3>{{ r.title }}</h3>
+    <p>{{ r.description }}</p>
+    <span class="go">Open report {{ m.icon('arrow-right', 'icon-sm') }}</span>
+  </a>
+  {% endfor %}
+</div>
+{% endfor %}
+{% endblock %}

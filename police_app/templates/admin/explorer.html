@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}Database explorer{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon('database', 'icon-sm') }} information_schema</div>
+    <h1>Database explorer</h1>
+    <p>Live metadata of <span class="mono">{{ s.db }}</span>: tables, keys, constraints, triggers, views, routines and indexes.</p>
+  </div>
+</div>
+
+<div class="grid g-6 mb-3">
+  {% for label, val, ico, cls in [('Tables', s.tables|length, 'layers', 'blue'), ('Views', s.views|length, 'eye', 'violet'),
+       ('Triggers', s.triggers|length, 'zap', 'amber'), ('Constraints', s.constraints|length, 'shield-check', 'green'),
+       ('Indexes', s.indexes|length, 'search', 'cyan'), ('Routines', s.routines|length, 'database', 'red')] %}
+  <div class="card kpi {{ cls }}"><div class="kpi-icon">{{ m.icon(ico) }}</div><div class="kpi-label">{{ label }}</div><div class="kpi-value">{{ val }}</div></div>
+  {% endfor %}
+</div>
+
+<nav class="tabs">
+  <a data-tab="tables">{{ m.icon('layers', 'icon-sm') }} Tables</a>
+  <a data-tab="constraints">{{ m.icon('shield-check', 'icon-sm') }} Constraints</a>
+  <a data-tab="relationships">{{ m.icon('link', 'icon-sm') }} Relationships</a>
+  <a data-tab="triggers">{{ m.icon('zap', 'icon-sm') }} Triggers &amp; routines</a>
+  <a data-tab="indexes">{{ m.icon('search', 'icon-sm') }} Indexes</a>
+</nav>
+
+<section class="tab-panel" data-panel="tables">
+  <div class="schema-tables">
+    {% for t in s.tables %}
+    <div class="schema-table">
+      <div class="h"><b>{{ t.name }}</b><span class="badge slate">{{ t.rows }} rows</span></div>
+      <ul>{% for c in s.columns if c.table_name == t.name %}
+        <li><span>{% if c.column_key %}<span class="k {{ c.column_key }}">{{ c.column_key }}</span> {% endif %}{{ c.column_name }}</span>
+          <span class="t">{{ c.column_type }}{{ '' if c.is_nullable == 'YES' else ' ·NN' }}</span></li>{% endfor %}</ul>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card mt-3"><div class="card-head"><h3>{{ m.icon('eye') }} Views</h3></div>
+    <div class="card-body row row-wrap">{% for v in s.views %}<span class="badge violet mono">{{ v.name }}</span>{% endfor %}</div></div>
+</section>
+
+<section class="tab-panel" data-panel="constraints">
+  <div class="card">
+    <div class="filters"><div class="grow">{{ m.icon('search', 'icon-sm') }}<input class="input" type="search" placeholder="Filter constraints…" data-table-filter="cons"></div></div>
+    <div class="table-wrap"><table class="table compact" id="cons">
+      <thead><tr><th>Table</th><th>Constraint</th><th>Type</th><th>Check clause</th></tr></thead>
+      <tbody>{% for c in s.constraints %}
+        <tr><td class="mono">{{ c.table_name }}</td><td class="mono strong">{{ c.constraint_name }}</td>
+          <td><span class="badge {{ {'PRIMARY KEY':'amber','UNIQUE':'violet','FOREIGN KEY':'blue','CHECK':'green'}.get(c.constraint_type, 'slate') }}">{{ c.constraint_type }}</span></td>
+          <td><div class="cell-long mono tiny">{{ c.check_clause or '' }}</div></td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+</section>
+
+<section class="tab-panel" data-panel="relationships">
+  <div class="card">
+    <div class="table-wrap"><table class="table compact">
+      <thead><tr><th>Child table</th><th>Column(s)</th><th></th><th>Parent table</th><th>Column(s)</th><th>Constraint</th></tr></thead>
+      <tbody>{% for f in s.fks %}
+        <tr><td class="mono strong">{{ f.table_name }}</td><td class="mono">{{ f.cols }}</td><td>{{ m.icon('arrow-right', 'icon-sm') }}</td>
+          <td class="mono strong">{{ f.referenced_table_name }}</td><td class="mono">{{ f.ref_cols }}</td><td class="mono tiny muted">{{ f.constraint_name }}</td></tr>
+      {% endfor %}</tbody></table></div>
+  </div>
+</section>
+
+<section class="tab-panel" data-panel="triggers">
+  <div class="grid g-2">
+    <div class="card">
+      <div class="card-head"><h3>{{ m.icon('zap') }} Triggers</h3></div>
+      <div class="table-wrap"><table class="table compact">
+        <thead><tr><th>Trigger</th><th>Timing</th><th>Event</th><th>Table</th></tr></thead>
+        <tbody>{% for t in s.triggers %}<tr><td class="mono strong">{{ t.trigger_name }}</td><td><span class="badge slate">{{ t.action_timing }}</span></td>
+          <td><span class="badge {{ {'INSERT':'green','UPDATE':'amber','DELETE':'red'}[t.event_manipulation] }}">{{ t.event_manipulation }}</span></td><td class="mono">{{ t.event_object_table }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>{{ m.icon('database') }} Stored procedures &amp; functions</h3></div>
+      <div class="list">{% for r in s.routines %}
+        <div class="list-item"><span class="ico-chip {{ 'blue' if r.routine_type == 'PROCEDURE' else 'violet' }}">{{ m.icon('database', 'icon-sm') }}</span>
+          <div class="grow"><div class="t mono">{{ r.routine_name }}</div><div class="s">{{ r.routine_type }}</div></div></div>{% endfor %}</div>
+    </div>
+  </div>
+</section>
+
+<section class="tab-panel" data-panel="indexes">
+  <div class="card">
+    <div class="table-wrap"><table class="table compact">
+      <thead><tr><th>Table</th><th>Index</th><th>Columns</th><th>Type</th><th>Unique</th></tr></thead>
+      <tbody>{% for i in s.indexes %}<tr><td class="mono">{{ i.table_name }}</td><td class="mono strong">{{ i.index_name }}</td><td class="mono">{{ i.cols }}</td>
+        <td><span class="badge slate">{{ i.index_type }}</span></td><td>{% if i.non_unique == 0 %}<span class="badge violet">UNIQUE</span>{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+</section>
+{% endblock %}

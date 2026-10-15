@@ -1,0 +1,104 @@
+{% import "partials/macros.html" as m with context %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Dashboard{% endblock %} · PCETS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v=1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%233d5afe' d='M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z'/%3E%3C/svg%3E">
+  <script>
+    (function () { var t; try { t = localStorage.getItem("pcets-theme"); } catch (e) {}
+      if (!t) t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      document.documentElement.dataset.theme = t; })();
+  </script>
+</head>
+<body data-open-modal="{% block open_modal %}{% endblock %}" data-tab="{% block active_tab %}{% endblock %}">
+{% include "partials/icons.html" %}
+{% set ep = request.endpoint or '' %}
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="{{ url_for('main.dashboard') }}">
+      <span class="brand-logo"><svg class="icon"><use href="#i-badge"/></svg></span>
+      <span><span class="brand-name">PCETS</span><br><span class="brand-sub">Complaint &amp; Evidence</span></span>
+    </a>
+    <nav class="nav">
+      <div class="nav-section">Overview</div>
+      <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if ep == 'main.dashboard' }}">{{ m.icon('dashboard') }} Dashboard</a>
+      <div class="nav-section">Operations</div>
+      <a href="{{ url_for('complaints.index') }}" class="{{ 'active' if ep.startswith('complaints.') and ep != 'complaints.new' }}">{{ m.icon('folder') }} Complaints</a>
+      {% if can('complaint.create') %}
+      <a href="{{ url_for('complaints.new') }}" class="{{ 'active' if ep == 'complaints.new' }}">{{ m.icon('file-plus') }} Register complaint</a>
+      {% endif %}
+      <a href="{{ url_for('evidence.index') }}" class="{{ 'active' if ep.startswith('evidence.') }}">{{ m.icon('box') }} Evidence &amp; custody</a>
+      <a href="{{ url_for('persons.index') }}" class="{{ 'active' if ep.startswith('persons.') }}">{{ m.icon('users') }} Persons</a>
+      <a href="{{ url_for('officers.index') }}" class="{{ 'active' if ep.startswith('officers.') }}">{{ m.icon('shield') }} Officers</a>
+      <div class="nav-section">Insights</div>
+      <a href="{{ url_for('reports.index') }}" class="{{ 'active' if ep.startswith('reports.') }}">{{ m.icon('chart') }} Reports</a>
+      {% if can('integrity.run') %}
+      <a href="{{ url_for('admin.integrity') }}" class="{{ 'active' if ep == 'admin.integrity' }}">{{ m.icon('shield-check') }} Integrity lab</a>
+      {% endif %}
+      <a href="{{ url_for('admin.explorer') }}" class="{{ 'active' if ep == 'admin.explorer' }}">{{ m.icon('database') }} Database explorer</a>
+    </nav>
+    <div class="side-footer">
+      <div class="side-card">
+        {{ m.avatar(g.user.full_name or g.user.username, g.user.user_id, 'sm') }}
+        <div style="min-width:0">
+          <div class="who truncate">{{ g.user.full_name or 'Administrator' }}</div>
+          <div class="role">{{ g.user.user_role|label }}{% if g.user.badge_no %} · {{ g.user.badge_no }}{% endif %}</div>
+        </div>
+      </div>
+      <form class="switch-user" method="post" action="{{ url_for('auth.switch_user') }}">{{ m.csrf() }}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <label for="acting-as">Acting as</label>
+        <select id="acting-as" name="username" onchange="this.form.submit()">
+          {% for u in all_users() %}
+          <option value="{{ u.username }}" {{ 'selected' if u.username == g.user.username }}>{{ u.full_name or 'Administrator' }} · {{ u.user_role }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-toggle" data-toggle-nav aria-label="Menu">{{ m.icon('menu') }}</button>
+      <form class="search" action="{{ url_for('main.search') }}" method="get" role="search">
+        {{ m.icon('search') }}
+        <input id="global-search" type="search" name="q" value="{{ request.args.get('q', '') if ep == 'main.search' }}"
+               placeholder="Search complaints, evidence IDs, persons, officers…" autocomplete="off">
+        <kbd>/</kbd>
+      </form>
+      <div class="topbar-actions">
+        <span class="station-pill"><span class="dot"></span>{{ g.user.station_name or 'All stations' }}</span>
+        <button class="icon-btn" data-toggle-theme title="Toggle theme" aria-label="Toggle theme">
+          <svg class="icon" data-theme-icon><use href="#i-moon"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<div class="toasts">
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+  {% set ico = {'success': ('check-circle', 'green'), 'error': ('alert', 'red'), 'info': ('info', 'blue'),
+                'warning': ('alert', 'amber')}.get(cat, ('info', 'blue')) %}
+  <div class="toast {{ 'sticky' if cat == 'error' }}" role="status">
+    <span class="ico-chip {{ ico[1] }}">{{ m.icon(ico[0], 'icon-sm') }}</span>
+    <div class="msg">{{ msg }}</div>
+    <button type="button" aria-label="Dismiss">{{ m.icon('x', 'icon-sm') }}</button>
+  </div>
+  {% endfor %}
+</div>
+{% block modals %}{% endblock %}
+<script src="{{ url_for('static', filename='js/app.js') }}?v=1"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

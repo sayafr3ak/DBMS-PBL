@@ -1,0 +1,142 @@
+{# ---------------- generic UI macros ---------------- #}
+{% macro icon(name, cls="") -%}<svg class="icon {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>{%- endmacro %}
+
+{% macro status_badge(s) -%}
+<span class="badge {{ C.STATUS_COLORS.get(s, 'slate') }}"><span class="dot"></span>{{ s|label }}</span>
+{%- endmacro %}
+
+{% macro priority(p) -%}<span class="prio {{ p }}"><i></i>{{ p|label }}</span>{%- endmacro %}
+
+{% macro ev_badge(s) -%}
+<span class="badge {{ C.EVIDENCE_STATUS_COLORS.get(s, 'slate') }}"><span class="dot"></span>{{ s|label }}</span>
+{%- endmacro %}
+
+{% macro avatar(name, id=1, size="") -%}
+<span class="avatar {{ size }} c{{ ((id or 1) % 6) + 1 }}">{{ name|initials }}</span>
+{%- endmacro %}
+
+{% macro csrf() -%}<input type="hidden" name="_csrf" value="{{ csrf_token() }}">{%- endmacro %}
+
+{% macro empty(title, text, ico="folder") -%}
+<div class="empty"><div class="ico">{{ icon(ico, 'icon-lg') }}</div><h3>{{ title }}</h3><p class="small">{{ text }}</p></div>
+{%- endmacro %}
+
+{% macro pager(pg, endpoint, args) -%}
+{% if pg.total %}
+<div class="pager">
+  <span>Showing <b>{{ pg.start }}–{{ pg.end }}</b> of <b>{{ pg.total }}</b></span>
+  {% if pg.pages > 1 %}
+  <div class="pages">
+    {% set a = args.to_dict() if args.to_dict is defined else dict(args) %}
+    {% if pg.page > 1 %}{% set _ = a.update({'page': pg.page - 1}) %}<a href="{{ url_for(endpoint, **a) }}">‹</a>{% endif %}
+    {% for p in pg.window %}
+      {% if p == pg.page %}<span class="cur">{{ p }}</span>
+      {% else %}{% set _ = a.update({'page': p}) %}<a href="{{ url_for(endpoint, **a) }}">{{ p }}</a>{% endif %}
+    {% endfor %}
+    {% if pg.page < pg.pages %}{% set _ = a.update({'page': pg.page + 1}) %}<a href="{{ url_for(endpoint, **a) }}">›</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{%- endmacro %}
+
+{# ---------------- form field macros ----------------
+   fs = form_state {'form': name, 'errors': {...}, 'data': {...}}
+   Value precedence: re-submitted data (on error) > given default.          #}
+{% macro _val(fs, form, name, value) -%}
+{%- if fs and fs.form == form and fs.data is not none and name in fs.data -%}{{ fs.data.get(name) }}{%- else -%}{{ value if value is not none else '' }}{%- endif -%}
+{%- endmacro %}
+
+{% macro _err(fs, form, name) -%}
+{%- if fs and fs.form == form and fs.errors and fs.errors.get(name) -%}{{ fs.errors.get(name) }}{%- endif -%}
+{%- endmacro %}
+
+{% macro input(fs, form, name, label, type="text", value=None, required=False, placeholder="", help="", cls="", attrs="") -%}
+{% set err = _err(fs, form, name) %}
+<div class="field {{ cls }} {{ 'has-error' if err }}">
+  <label for="{{ form }}-{{ name }}">{{ label }}{% if required %}<span class="req">*</span>{% endif %}</label>
+  <input id="{{ form }}-{{ name }}" type="{{ type }}" name="{{ name }}" value="{{ _val(fs, form, name, value) }}"
+         {% if required %}required{% endif %} placeholder="{{ placeholder }}" {{ attrs|safe }}>
+  {% if err %}<span class="err">{{ icon('alert', 'icon-sm') }}{{ err }}</span>{% elif help %}<span class="help">{{ help }}</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro textarea(fs, form, name, label, value=None, required=False, placeholder="", help="", cls="", rows=4, attrs="") -%}
+{% set err = _err(fs, form, name) %}
+<div class="field {{ cls }} {{ 'has-error' if err }}">
+  <label for="{{ form }}-{{ name }}">{{ label }}{% if required %}<span class="req">*</span>{% endif %}</label>
+  <textarea id="{{ form }}-{{ name }}" name="{{ name }}" rows="{{ rows }}" {% if required %}required{% endif %}
+            placeholder="{{ placeholder }}" {{ attrs|safe }}>{{ _val(fs, form, name, value) }}</textarea>
+  {% if err %}<span class="err">{{ icon('alert', 'icon-sm') }}{{ err }}</span>{% elif help %}<span class="help">{{ help }}</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro select(fs, form, name, label, options, value=None, required=False, empty="", help="", cls="", attrs="") -%}
+{# options: list of (value, label) #}
+{% set err = _err(fs, form, name) %}
+{% set cur = _val(fs, form, name, value)|string %}
+<div class="field {{ cls }} {{ 'has-error' if err }}">
+  <label for="{{ form }}-{{ name }}">{{ label }}{% if required %}<span class="req">*</span>{% endif %}</label>
+  <select id="{{ form }}-{{ name }}" name="{{ name }}" {% if required %}required{% endif %} {{ attrs|safe }}>
+    {% if empty %}<option value="">{{ empty }}</option>{% endif %}
+    {% for v, l in options %}<option value="{{ v }}" {{ 'selected' if v|string == cur }}>{{ l }}</option>{% endfor %}
+  </select>
+  {% if err %}<span class="err">{{ icon('alert', 'icon-sm') }}{{ err }}</span>{% elif help %}<span class="help">{{ help }}</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro checkbox(fs, form, name, label, checked=False, help="", attrs="") -%}
+{% if fs and fs.form == form and fs.data is not none %}{% set on = fs.data.get(name) in ('1', 'on') %}{% else %}{% set on = checked %}{% endif %}
+<div class="field">
+  <label class="check"><input type="checkbox" name="{{ name }}" value="1" {{ 'checked' if on }} {{ attrs|safe }}> {{ label }}</label>
+  {% if help %}<span class="help">{{ help }}</span>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro form_errors(fs, form) -%}
+{% if fs and fs.form == form and fs.errors %}
+<div class="alert error mb-3">{{ icon('alert') }}<div><b>Please fix {{ fs.errors|length }} field{{ 's' if fs.errors|length != 1 }}.</b>
+  {% if fs.errors.get('_') %}<br>{{ fs.errors.get('_') }}{% endif %}</div></div>
+{% endif %}
+{%- endmacro %}
+
+{# person picker: existing person (AJAX search) OR new person fields #}
+{% macro person_picker(fs, form, mode_name, id_name, prefix, title="Person", default_mode="existing") -%}
+{% set mode = _val(fs, form, mode_name, default_mode) %}
+<div class="field full">
+  <div class="row between">
+    <label>{{ title }}<span class="req">*</span></label>
+    <div class="segmented" data-mode-switch="{{ form }}-{{ mode_name }}">
+      <label><input type="radio" name="{{ mode_name }}" value="existing" {{ 'checked' if mode != 'new' }}><span>Existing person</span></label>
+      <label><input type="radio" name="{{ mode_name }}" value="new" {{ 'checked' if mode == 'new' }}><span>New person</span></label>
+    </div>
+  </div>
+</div>
+<div class="full" data-mode-for="{{ form }}-{{ mode_name }}" data-mode="existing">
+  {% set err = _err(fs, form, id_name) %}
+  <div class="field {{ 'has-error' if err }}">
+    <div class="picker" data-person-picker>
+      <input type="hidden" name="{{ id_name }}" value="{{ _val(fs, form, id_name, '') }}">
+      <input type="search" class="input" placeholder="Search by name, phone or ID proof…" autocomplete="off">
+      <div class="picked" hidden data-name="" data-meta="">
+        {{ icon('user') }}<div><div class="pname strong"></div><div class="pmeta tiny muted"></div></div>
+        <button class="btn btn-ghost btn-sm x" type="button">Change</button>
+      </div>
+      <div class="picker-results"></div>
+    </div>
+    {% if err %}<span class="err">{{ icon('alert', 'icon-sm') }}{{ err }}</span>{% else %}<span class="help">Type at least 2 characters.</span>{% endif %}
+  </div>
+</div>
+<div class="full" data-mode-for="{{ form }}-{{ mode_name }}" data-mode="new" hidden>
+  <div class="form-grid">
+    {{ input(fs, form, prefix ~ 'full_name', 'Full name', required=True, placeholder='e.g. Rahul Mehta') }}
+    {{ select(fs, form, prefix ~ 'gender', 'Gender', C.GENDERS.items(), required=True, empty='Select…') }}
+    {{ input(fs, form, prefix ~ 'phone', 'Mobile', type='tel', placeholder='10-digit mobile') }}
+    {{ input(fs, form, prefix ~ 'date_of_birth', 'Date of birth', type='date', attrs='data-max-today') }}
+    {{ input(fs, form, prefix ~ 'address', 'Address', required=True, cls='full') }}
+    {{ select(fs, form, prefix ~ 'id_proof_type', 'ID proof type', C.ID_TYPES.items(), empty='None') }}
+    {{ input(fs, form, prefix ~ 'id_proof_no', 'ID proof number', placeholder='e.g. 458712369874') }}
+    {{ input(fs, form, prefix ~ 'email', 'Email', type='email', cls='full') }}
+  </div>
+</div>
+{%- endmacro %}

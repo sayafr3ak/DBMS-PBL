@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% import "partials/macros.html" as m with context %}
+{% block title %}{{ rep.title }}{% endblock %}
+
+{% macro cell(fmt, v, r) -%}
+  {%- if v is none or v == '' -%}<span class="muted">—</span>
+  {%- elif fmt == 'complaint' -%}<a class="idtag" href="{{ url_for('complaints.detail', complaint_id=r.complaint_id) }}">{{ v }}</a>
+  {%- elif fmt == 'evidence' -%}<a class="idtag" href="{{ url_for('evidence.detail', evidence_id=r.evidence_id) }}">{{ v }}</a>
+  {%- elif fmt == 'officer' -%}<a href="{{ url_for('officers.detail', officer_id=r.officer_id) }}" class="strong">{{ v }}</a>
+  {%- elif fmt == 'status' -%}{{ m.status_badge(v) }}
+  {%- elif fmt == 'priority' -%}{{ m.priority(v) }}
+  {%- elif fmt == 'evstatus' -%}{{ m.ev_badge(v) }}
+  {%- elif fmt == 'purpose' or fmt == 'label' -%}{{ v|label }}
+  {%- elif fmt == 'date' -%}<span class="nowrap">{{ v|d }}</span>
+  {%- elif fmt == 'datetime' -%}<span class="nowrap">{{ v|dt }}</span>
+  {%- elif fmt == 'bool' -%}{% if v %}<span class="badge green">{{ m.icon('check', 'icon-sm') }} Yes</span>{% else %}<span class="badge red">No</span>{% endif %}
+  {%- elif fmt == 'days' -%}<span class="badge {{ 'red' if v > 120 else ('amber' if v > 30 else 'slate') }}">{{ v }} d</span>
+  {%- elif fmt == 'num' -%}<b>{{ v }}</b>
+  {%- elif fmt == 'mono' -%}<span class="mono">{{ v }}</span>
+  {%- elif fmt == 'long' -%}<div class="cell-long">{{ v }}</div>
+  {%- elif fmt == 'evtype' -%}<span class="badge outline">{{ v|title }}</span>
+  {%- elif fmt == 'integrity' -%}<span class="badge {{ 'green' if v.startswith('OK') else 'red' }}">{{ m.icon('check' if v.startswith('OK') else 'alert', 'icon-sm') }} {{ v }}</span>
+  {%- else -%}{{ v }}{%- endif -%}
+{%- endmacro %}
+
+{% block content %}
+<div class="crumbs no-print"><a href="{{ url_for('reports.index') }}">Reports</a>{{ m.icon('chevron-right', 'icon-sm') }}{{ rep.title }}</div>
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ m.icon(rep.icon, 'icon-sm') }} {{ rep.group }}</div>
+    <h1>{{ rep.title }}</h1>
+    <p>{{ rep.description }}</p>
+    <p class="small">Generated {{ generated|dt }} by {{ g.user.full_name or g.user.username }} · {{ rows|length }} row{{ 's' if rows|length != 1 }}</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn" onclick="window.print()">{{ m.icon('printer') }} Print</button>
+    <a class="btn btn-primary" href="{{ url_for('reports.export', key=rep.key, **args.to_dict()) }}">{{ m.icon('download') }} Export CSV</a>
+  </div>
+</div>
+
+{% if rep.params %}
+<div class="card mb-3 no-print">
+  <form class="filters" method="get" style="border:0">
+    {% for p in rep.params %}
+      {% if p == 'station' %}
+        <select class="input" name="station"><option value="">All stations</option>
+          {% for s in stations %}<option value="{{ s.station_id }}" {{ 'selected' if args.get('station') == s.station_id|string }}>{{ s.station_name }}</option>{% endfor %}</select>
+      {% elif p == 'priority' %}
+        <select class="input" name="priority"><option value="">Any priority</option>
+          {% for k, v in C.PRIORITIES.items() %}<option value="{{ k }}" {{ 'selected' if args.get('priority') == k }}>{{ v }}</option>{% endfor %}</select>
+      {% elif p == 'min_days' %}
+        <input class="input" type="number" min="0" name="min_days" value="{{ args.get('min_days', '') }}" placeholder="Min. days pending" style="width:160px">
+      {% elif p == 'ev_status' %}
+        <select class="input" name="ev_status"><option value="">Any status</option>
+          {% for k, v in C.EVIDENCE_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if args.get('ev_status') == k }}>{{ v }}</option>{% endfor %}</select>
+      {% elif p == 'ev_category' %}
+        <select class="input" name="ev_category"><option value="">Any category</option>
+          {% for k, v in C.EVIDENCE_CATEGORIES.items() %}<option value="{{ k }}" {{ 'selected' if args.get('ev_category') == k }}>{{ v }}</option>{% endfor %}</select>
+      {% elif p == 'evidence' %}
+        <select class="input" name="evidence" style="min-width:320px"><option value="">All evidence items</option>
+          {% for e in evidence_items %}<option value="{{ e.evidence_id }}" {{ 'selected' if args.get('evidence') == e.evidence_id|string }}>{{ e.evidence_no }} — {{ e.description|truncate(50) }}</option>{% endfor %}</select>
+      {% elif p in ('complaint', 'complaint_required') %}
+        <select class="input" name="complaint" style="min-width:340px" {{ 'required' if p == 'complaint_required' }}>
+          <option value="">{{ 'Select a complaint…' if p == 'complaint_required' else 'All complaints' }}</option>
+          {% for c in complaints %}<option value="{{ c.complaint_id }}" {{ 'selected' if args.get('complaint') == c.complaint_id|string }}>{{ c.complaint_no }} — {{ c.title|truncate(50) }}</option>{% endfor %}</select>
+      {% elif p == 'date_from' %}<input class="input" type="date" name="date_from" value="{{ args.get('date_from', '') }}" title="From">
+      {% elif p == 'date_to' %}<input class="input" type="date" name="date_to" value="{{ args.get('date_to', '') }}" title="To">
+      {% elif p == 'closure_type' %}
+        <select class="input" name="closure_type"><option value="">Any closure type</option>
+          {% for k, v in C.CLOSURE_TYPES.items() %}<option value="{{ k }}" {{ 'selected' if args.get('closure_type') == k }}>{{ v }}</option>{% endfor %}</select>
+      {% endif %}
+    {% endfor %}
+    <button class="btn btn-sm btn-primary" type="submit" data-keep>{{ m.icon('play') }} Run report</button>
+    <a class="btn btn-sm btn-ghost" href="{{ url_for('reports.view', key=rep.key) }}">Reset</a>
+  </form>
+</div>
+{% endif %}
+
+{% if chart %}
+<div class="card mb-3">
+  <div class="card-head"><h3>{{ m.icon('chart') }} Visual summary</h3></div>
+  <div class="card-body">
+    {% set cmax = [chart|map(attribute=1)|max, 1]|max %}
+    <div class="hbars">
+      {% for label, val in chart %}
+      <div class="hbar"><div class="top"><span>{{ label|label }}</span><b>{{ val }}</b></div>
+        <div class="track"><div class="fill" style="width:0" data-w="{{ (val / cmax * 100)|round }}%"></div></div></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  {% if rows %}
+  <div class="filters no-print"><div class="grow">{{ m.icon('search', 'icon-sm') }}
+    <input class="input" type="search" placeholder="Quick filter rows…" data-table-filter="report-table"></div></div>
+  <div class="table-wrap"><table class="table compact" id="report-table">
+    <thead><tr>{% for c in cols %}<th>{{ c[1] }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for r in rows %}<tr>{% for c in cols %}<td>{{ cell(c[2], r[c[0]], r) }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+  {% elif 'complaint_required' in rep.params and not args.get('complaint') %}
+    {{ m.empty('Select a complaint', 'Choose a complaint above and run the report to see its full timeline.', 'clock') }}
+  {% else %}
+    {{ m.empty('No rows', 'The report returned no data for these filters.', 'chart') }}
+  {% endif %}
+</div>
+{% endblock %}
