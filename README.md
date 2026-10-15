@@ -22,6 +22,26 @@ Use the **Acting as** selector at the bottom of the sidebar to switch role:
 | `anjali` / `arjun` / `sneha` / `nikhil` | Investigating Officer |
 | `suresh` / `ganesh` | Evidence Custodian |
 
+## Live deployment (Clever Cloud)
+
+Live app: **https://app-f830abc4-c524-45b9-bef6-9a9c73e64e95.cleverapps.io/** — Python app `pcets` (nano, Paris) linked to the MySQL add-on `policedb`.
+
+Clever Cloud's DEV MySQL refuses `CREATE TRIGGER` / `CREATE FUNCTION` (binary logging, no SUPER privilege) and allows
+only 5 connections. The app therefore runs in **hosted mode** there: when no triggers exist it issues the CMP/EVD numbers,
+writes the status history and checks the trigger rules itself (keys, CHECK and foreign keys are still enforced by MySQL).
+On a local MySQL the real triggers are installed and the Integrity Lab shows MySQL rejecting every rule.
+
+App environment variables: `CC_PYTHON_MODULE=run:app`, `CC_PYTHON_BACKEND=gunicorn`, `CC_PYTHON_VERSION=3`,
+`PCETS_DB_POOL_SIZE=0` (one connection per request), `TZ=Asia/Kolkata`, `PCETS_SECRET_KEY`; `MYSQL_ADDON_*` come from the linked add-on.
+
+```bash
+npm install -g clever-tools && clever login
+python setup_db.py                       # build the local DB (source of the sample data)
+# with MYSQL_ADDON_HOST/PORT/USER/PASSWORD/DB set to the add-on's credentials:
+python tools/deploy_db.py                # schema + procedures + views + data into the add-on
+clever deploy                            # push the committed code (git) and restart
+```
+
 ## Tests
 
 ```bash
