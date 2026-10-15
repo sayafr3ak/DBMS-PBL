@@ -38,10 +38,11 @@ def load_db_config():
 
 
 def db_pool_size():
-    """Clever Cloud DEV MySQL allows only 5 connections per user, so keep the pool small there."""
+    """Clever Cloud DEV MySQL allows only 5 connections per user and runs several gunicorn
+    workers, so there the default is 0 = one connection per request (no idle pooled connections)."""
     p = _read()
     sect = p["database"] if p.has_section("database") else {}
-    default = "3" if os.environ.get("MYSQL_ADDON_HOST") else "8"
+    default = "0" if os.environ.get("MYSQL_ADDON_HOST") else "8"
     return int(_pick(["PCETS_DB_POOL_SIZE"], sect.get("pool_size"), default))
 
 

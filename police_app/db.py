@@ -33,26 +33,41 @@ class ValidationError(AppError):
         super().__init__("Please correct the highlighted fields.")
 
 
+_direct_cfg = None   # set when pooling is disabled (PCETS_DB_POOL_SIZE=0)
+
+
 def init_pool(database=None):
-    global _pool
+    """Create the connection pool. Pool size 0 = open one connection per request instead
+    (used on hosts with a tiny per-user connection limit, e.g. Clever Cloud DEV: 5)."""
+    global _pool, _direct_cfg
     cfg = load_db_config()
     if database:
         cfg["database"] = database
-    _pool = pooling.MySQLConnectionPool(pool_name="pcets", pool_size=db_pool_size(), pool_reset_session=True,
-                                        charset="utf8mb4", collation="utf8mb4_0900_ai_ci",
-                                        time_zone="+05:30", autocommit=True, **cfg)
+    common = dict(charset="utf8mb4", collation="utf8mb4_0900_ai_ci", time_zone="+05:30", autocommit=True, **cfg)
+    size = db_pool_size()
+    if size <= 0:
+        _pool, _direct_cfg = None, common
+        return None
+    _direct_cfg = None
+    _pool = pooling.MySQLConnectionPool(pool_name="pcets", pool_size=size, pool_reset_session=True, **common)
     return _pool
 
 
-def get_conn():
-    if _pool is None:
+def _new_connection():
+    if _pool is None and _direct_cfg is None:
         init_pool()
+    if _direct_cfg is not None:
+        return mysql.connector.connect(**_direct_cfg)
+    return _pool.get_connection()          # autocommit=True is part of the pool config
+
+
+def get_conn():
     if has_request_context():
         if "db" not in g:
-            g.db = _pool.get_connection()      # autocommit=True is part of the pool config
+            g.db = _new_connection()
             _set_session_vars(g.db)
         return g.db
-    return _pool.get_connection()
+    return _new_connection()
 
 
 def _set_session_vars(conn):
