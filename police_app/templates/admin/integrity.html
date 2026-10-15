@@ -16,6 +16,12 @@
   </div>
 </div>
 
+{% if hosted %}
+<div class="alert warn mb-3">{{ m.icon('info') }}<div><b>Hosted mode.</b> This database host does not allow triggers
+  (binary logging without SUPER privilege, e.g. Clever Cloud DEV plan). Keys, CHECK and foreign-key rules are still
+  enforced by MySQL; trigger-based rules are enforced by the application here. Run the project on a local MySQL to see
+  MySQL reject every scenario.</div></div>
+{% endif %}
 {% if ran_all %}
 <div class="card mb-3"><div class="card-body score">
   {% set total = results|length %}{% set pct = (passed / total * 100) if total else 0 %}
@@ -42,8 +48,9 @@
       <pre>{{ sc.statements|join(';\n') }};</pre>
       {% if res %}
       <div class="result">
-        <div class="result-box {{ 'pass' if res.passed else 'fail' }}">{{ m.icon('check-circle' if res.passed else 'x-circle') }}
-          <div><b>{{ 'REJECTED by MySQL — rule enforced' if res.passed else 'NOT REJECTED' }}</b>
+        {% set app_side = hosted and not res.passed and 'Trigger' in sc.mechanism %}
+        <div class="result-box {{ 'pass' if res.passed or app_side else 'fail' }}">{{ m.icon('check-circle' if res.passed or app_side else 'x-circle') }}
+          <div><b>{{ 'REJECTED by MySQL — rule enforced' if res.passed else ('Raw SQL accepted (no triggers on this host) — rule enforced by the application' if app_side else 'NOT REJECTED') }}</b>
             {% if res.code %}<br><code>ERROR {{ res.code }}</code>{% endif %} {{ res.error }}</div></div>
       </div>
       {% endif %}

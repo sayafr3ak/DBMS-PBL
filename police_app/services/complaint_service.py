@@ -6,6 +6,7 @@ from ..db import query, query_one, execute, scalar, transaction, AppError, Valid
 from ..validators import Form
 from .. import constants as C
 from . import person_service
+from .. import hosted
 
 SORTS = {
     "newest": "registered_at DESC",
@@ -178,18 +179,28 @@ def register_complaint(data, registered_by):
 
     with transaction(remarks="Investigation started on registration") as conn:
         complainant_id = person_service.resolve_person(data, "complainant_mode", "complainant_id", "p_", conn)
+        app_mode = not hosted.has_triggers(conn)          # no triggers -> the app issues numbers + history
+        reg_at = hosted.now_minute()
+        number = hosted.next_number(conn, "complaint", "complaint_no", "CMP", reg_at.year) if app_mode else None
         complaint_id = execute(
-            """INSERT INTO complaint (station_id, complainant_id, title, description, category, priority,
-                                      incident_datetime, incident_location, registered_by)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            (clean["station_id"], complainant_id, clean["title"], clean["description"], clean["category"],
-             clean["priority"], clean["incident_datetime"], clean["incident_location"], registered_by), conn=conn)
+            """INSERT INTO complaint (complaint_no, station_id, complainant_id, title, description, category, priority,
+                                      incident_datetime, incident_location, registered_at, registered_by)
+               VALUES (COALESCE(%s, ''), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            (number, clean["station_id"], complainant_id, clean["title"], clean["description"], clean["category"],
+             clean["priority"], clean["incident_datetime"], clean["incident_location"], reg_at, registered_by),
+            conn=conn)
+        if app_mode:
+            hosted.log_status(conn, complaint_id, None, "REGISTERED", registered_by, "Complaint registered", reg_at)
         if lead:
-            execute("""INSERT INTO assignment (complaint_id, officer_id, assignment_role, assigned_by, remarks)
-                       VALUES (%s, %s, 'LEAD', %s, 'Assigned at registration')""",
-                    (complaint_id, lead, registered_by), conn=conn)
+            hosted.require_active_officer(conn, lead, "Inactive officers cannot be assigned to a case.")
+            execute("""INSERT INTO assignment (complaint_id, officer_id, assignment_role, assigned_at, assigned_by, remarks)
+                       VALUES (%s, %s, 'LEAD', %s, %s, 'Assigned at registration')""",
+                    (complaint_id, lead, reg_at, registered_by), conn=conn)
             execute("UPDATE complaint SET status = 'UNDER_INVESTIGATION' WHERE complaint_id = %s",
                     (complaint_id,), conn=conn)
+            if app_mode:
+                hosted.log_status(conn, complaint_id, "REGISTERED", "UNDER_INVESTIGATION", registered_by,
+                                  "Investigation started on registration", reg_at)
         number = scalar("SELECT complaint_no FROM complaint WHERE complaint_id = %s", (complaint_id,), conn=conn)
     return complaint_id, number
 
@@ -234,6 +245,7 @@ def update_status(complaint_id, data, acting_officer_id):
         current = scalar("SELECT status FROM complaint WHERE complaint_id = %s FOR UPDATE", (complaint_id,), conn=conn)
         if current != complaint["status"]:
             raise AppError("The case status was changed by someone else. Reload and try again.")
+        hosted.require_status_preconditions(conn, complaint_id, current, new_status)
         if new_status == "CLOSED":
             execute("""UPDATE complaint SET status='CLOSED', closure_date=%s, closure_type=%s,
                               closure_remarks=%s, closed_by=%s WHERE complaint_id=%s""",
@@ -247,6 +259,11 @@ def update_status(complaint_id, data, acting_officer_id):
                     (new_status, complaint_id), conn=conn)
         else:
             execute("UPDATE complaint SET status=%s WHERE complaint_id=%s", (new_status, complaint_id), conn=conn)
+        if not hosted.has_triggers(conn):                  # audit trail written by the app in hosted mode
+            hosted.log_status(conn, complaint_id, current, new_status,
+                              acting_officer_id or closure.get("closed_by"),
+                              remarks or (closure.get("closure_remarks") if new_status == "CLOSED"
+                                          else f"Status changed to {new_status}"))
     return new_status
 
 
@@ -264,6 +281,7 @@ def assign_officer(complaint_id, data, assigned_by):
     clean = f.raise_if_invalid()
 
     with transaction() as conn:
+        hosted.require_active_officer(conn, officer_id, "Inactive officers cannot be assigned to a case.")
         if role == "LEAD":
             current_lead = query_one("""SELECT assignment_id, officer_id FROM assignment WHERE complaint_id=%s
                                          AND assignment_role='LEAD' AND relieved_at IS NULL FOR UPDATE""",
@@ -282,9 +300,9 @@ def assign_officer(complaint_id, data, assigned_by):
                 raise AppError("This officer is already assigned to the case with the same role.")
             execute("UPDATE assignment SET relieved_at = NOW() WHERE assignment_id = %s",
                     (existing["assignment_id"],), conn=conn)
-        execute("""INSERT INTO assignment (complaint_id, officer_id, assignment_role, assigned_by, remarks)
-                   VALUES (%s, %s, %s, %s, %s)""",
-                (complaint_id, officer_id, role, assigned_by, clean["remarks"]), conn=conn)
+        execute("""INSERT INTO assignment (complaint_id, officer_id, assignment_role, assigned_at, assigned_by, remarks)
+                   VALUES (%s, %s, %s, %s, %s, %s)""",
+                (complaint_id, officer_id, role, hosted.now_minute(), assigned_by, clean["remarks"]), conn=conn)
 
 
 def relieve_assignment(complaint_id, assignment_id):
@@ -312,6 +330,7 @@ def log_activity(complaint_id, data):
     f.text("description", "Description", min_len=5, max_len=1000)
     f.text("outcome", "Outcome", required=False, max_len=500)
     clean = f.raise_if_invalid()
+    hosted.require_assigned_at(None, complaint_id, clean["officer_id"], clean["activity_time"])
     return execute(
         """INSERT INTO investigation_activity (complaint_id, officer_id, activity_type, activity_time, location,
                                                description, outcome) VALUES (%s, %s, %s, %s, %s, %s, %s)""",
@@ -338,6 +357,7 @@ def add_witness(complaint_id, data):
     clean = f.clean
     with transaction() as conn:
         person_id = person_service.resolve_person(data, "witness_mode", "witness_person_id", "w_", conn)
+        hosted.require_not_accused(conn, complaint_id, person_id)
         execute("""INSERT INTO witness (complaint_id, person_id, statement, statement_date, recorded_by, is_protected)
                    VALUES (%s, %s, %s, %s, %s, %s)""",
                 (complaint_id, person_id, clean["statement"], clean["statement_date"], clean["recorded_by"],
@@ -367,6 +387,7 @@ def add_accused(complaint_id, data):
     clean = f.clean
     with transaction() as conn:
         person_id = person_service.resolve_person(data, "accused_mode", "accused_person_id", "a_", conn)
+        hosted.require_can_be_accused(conn, complaint_id, person_id)
         execute("""INSERT INTO complaint_accused (complaint_id, person_id, accused_status, remarks)
                    VALUES (%s, %s, %s, %s)""",
                 (complaint_id, person_id, clean["accused_status"], clean["accused_remarks"]), conn=conn)
@@ -391,6 +412,8 @@ def remove_accused(complaint_id, person_id):
 def add_charge(complaint_id, data, charged_by_default):
     complaint = get_complaint(complaint_id)
     _require_open(complaint)
+    if complaint["status"] == "REGISTERED":
+        raise AppError("Charges can only be framed while the case is under investigation or later (not closed).")
     f = Form(data)
     f.integer("accused_person_id", "Accused", min_value=1)
     f.choice("act_name", "Act", C.ACTS)
@@ -438,6 +461,8 @@ def _validate_court(f, filing_required=True):
 
 def add_court_ref(complaint_id, data):
     complaint = get_complaint(complaint_id)
+    if complaint["status"] not in ("CHARGE_SHEETED", "IN_COURT"):
+        raise AppError("A court reference can only be added after the case is charge-sheeted.")
     f = Form(data)
     f.text("court_case_no", "Court case number", min_len=3, max_len=30)
     _validate_court(f)

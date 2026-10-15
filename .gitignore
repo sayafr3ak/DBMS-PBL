@@ -12,3 +12,6 @@ venv/
 .claude/
 .vscode/
 .idea/
+
+# Clever Cloud CLI link (local)
+.clever.json

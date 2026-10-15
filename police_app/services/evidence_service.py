@@ -2,6 +2,7 @@
 from ..db import query, query_one, execute, scalar, transaction, AppError, ValidationError
 from ..validators import Form
 from .. import constants as C
+from .. import hosted
 
 
 def list_evidence(filters, page=1, per_page=12):
@@ -96,11 +97,14 @@ def register_evidence(data):
         clean["seal_no"] = seal.upper()
 
     with transaction() as conn:
+        hosted.require_active_officer(conn, clean["collected_by"], "Collecting officer is not active.")
+        number = (hosted.next_number(conn, "evidence_item", "evidence_no", "EVD", clean["collected_at"].year)
+                  if not hosted.has_triggers(conn) else None)
         evidence_id = execute(
-            """INSERT INTO evidence_item (complaint_id, category, description, quantity, item_condition, seal_no,
-                                          collected_at, collected_by, collected_from)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            (clean["complaint_id"], clean["category"], clean["description"], clean["quantity"],
+            """INSERT INTO evidence_item (evidence_no, complaint_id, category, description, quantity, item_condition,
+                                          seal_no, collected_at, collected_by, collected_from)
+               VALUES (COALESCE(%s, ''), %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            (number, clean["complaint_id"], clean["category"], clean["description"], clean["quantity"],
              clean["item_condition"], clean["seal_no"], clean["collected_at"], clean["collected_by"],
              clean["collected_from"]), conn=conn)
         execute("""INSERT INTO custody_log (evidence_id, from_officer_id, to_officer_id, location, purpose, received_at,
@@ -122,6 +126,7 @@ def _do_transfer(conn, evidence_id, to_officer_id, location, purpose, transfer_a
         raise AppError("This evidence item has no current custodian.")
     if current["purpose"] in C.FINAL_PURPOSES:
         raise AppError("This evidence item has already been returned/disposed. The chain is final.")
+    hosted.require_active_officer(conn, to_officer_id, "Custody cannot be given to an inactive officer.")
     if current["to_officer_id"] == to_officer_id:
         raise AppError("The receiving officer already holds this item.")
     if transfer_at <= current["received_at"]:

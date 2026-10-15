@@ -3,6 +3,7 @@ from flask import Blueprint, render_template, request
 
 from ..auth import requires
 from ..services import integrity_service as isvc
+from ..hosted import has_triggers
 
 bp = Blueprint("admin", __name__)
 
@@ -23,7 +24,7 @@ def integrity():
     for sc in isvc.SCENARIOS.values():
         grouped.setdefault(sc["rule"], []).append(sc)
     return render_template("admin/integrity.html", rules=isvc.RULES, grouped=grouped, results=results,
-                           ran_all=len(results) > 1)
+                           ran_all=len(results) > 1, hosted=not has_triggers())
 
 
 @bp.route("/explorer")

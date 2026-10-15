@@ -21,6 +21,9 @@ from police_app.db import query, query_one, scalar  # noqa: E402
 from police_app.services import integrity_service  # noqa: E402
 
 TEST_DB = "police_evidence_test"
+# PCETS_TEST_HOSTED=1 drops all triggers/functions after loading, to test "hosted mode"
+# (MySQL services such as Clever Cloud DEV that refuse CREATE TRIGGER)
+HOSTED = os.environ.get("PCETS_TEST_HOSTED") == "1"
 
 
 def fmt(dt):
@@ -33,6 +36,20 @@ class PCETSTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         setup_db.setup(TEST_DB, quiet=True)
+        if HOSTED:
+            import mysql.connector
+            from police_app.config import load_db_config
+            cfg = dict(load_db_config(), database=TEST_DB)
+            cn = mysql.connector.connect(**cfg, autocommit=True)
+            cur = cn.cursor()
+            cur.execute("SELECT trigger_name FROM information_schema.triggers WHERE trigger_schema=%s", (TEST_DB,))
+            for (t,) in cur.fetchall():
+                cur.execute(f"DROP TRIGGER `{t}`")
+            cur.execute("SELECT routine_name FROM information_schema.routines WHERE routine_schema=%s "
+                        "AND routine_type='FUNCTION'", (TEST_DB,))
+            for (f,) in cur.fetchall():
+                cur.execute(f"DROP FUNCTION `{f}`")
+            cn.close()
         cls.app = create_app(database=TEST_DB, testing=True)
         cls.app.config["WTF_CSRF_DISABLED"] = True
         cls.state = {}
@@ -299,6 +316,7 @@ class PCETSTestCase(unittest.TestCase):
         self.assertEqual(r.status_code, 422)
         self.assertIn("already been returned/disposed", r.data.decode() + self.flashes(c))
 
+    @unittest.skipIf(HOSTED, "trigger-based rules are enforced by the app in hosted mode")
     def test_24_database_enforces_every_rule(self):
         with self.app.test_request_context():
             results = integrity_service.run_all()
